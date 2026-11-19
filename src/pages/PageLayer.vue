@@ -1,6 +1,8 @@
 <script setup>
 import { computed, nextTick, ref, watch } from "vue"
 import { pages } from "./pages.js"
+import { useFocusTrap } from "../composables/useFocusTrap.js"
+import PlayerPage from "./PlayerPage.vue"
 import SlimPage from "./SlimPage.vue"
 
 const props = defineProps({
@@ -13,6 +15,11 @@ const root = ref(null)
 const closeButton = ref(null)
 const page = computed(() => (props.id ? pages[props.id] ?? null : null))
 let gridScroll = 0
+
+useFocusTrap(
+  () => root.value,
+  () => page.value !== null,
+)
 
 function close() {
   emit("close")
@@ -41,6 +48,7 @@ function onAfterLeave() {
       v-if="page"
       ref="root"
       class="page-layer"
+      :class="{ 'is-player': page.kind === 'player' }"
       role="dialog"
       aria-modal="true"
       aria-labelledby="page-title"
@@ -51,7 +59,10 @@ function onAfterLeave() {
           <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
         </svg>
       </button>
-      <SlimPage v-if="page.kind === 'slim'" :page="page" />
+      <div v-if="page.kind !== 'player'" class="sheet">
+        <SlimPage v-if="page.kind === 'slim'" :page="page" />
+      </div>
+      <PlayerPage v-else :page="page" />
     </div>
   </Transition>
 </template>
@@ -62,6 +73,23 @@ function onAfterLeave() {
   z-index: 4;
   padding: 104px 0 40px;
   pointer-events: none;
+  font-family: "Figma Sans VF", "Figma Sans", sans-serif;
+  font-variation-settings: "wdth" 100;
+}
+
+.page-layer.is-player {
+  padding: 0;
+}
+
+.sheet {
+  position: relative;
+  z-index: 1;
+  width: min(640px, calc(100vw - 32px));
+  margin-inline: auto;
+  background: #fff;
+  color: #141414;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  pointer-events: auto;
   font-family: "Figma Sans VF", "Figma Sans", sans-serif;
   font-variation-settings: "wdth" 100;
 }
@@ -119,8 +147,10 @@ function onAfterLeave() {
   transition: opacity 240ms ease;
 }
 
-.page-enter-active :deep(.slim),
-.page-leave-active :deep(.slim) {
+.page-enter-active .sheet,
+.page-leave-active .sheet,
+.page-enter-active :deep(.player-anchor),
+.page-leave-active :deep(.player-anchor) {
   transition: transform 520ms cubic-bezier(0.22, 1, 0.3, 1);
 }
 
@@ -131,8 +161,10 @@ function onAfterLeave() {
   opacity: 0;
 }
 
-.page-enter-from :deep(.slim),
-.page-leave-to :deep(.slim) {
+.page-enter-from .sheet,
+.page-leave-to .sheet,
+.page-enter-from :deep(.player-anchor),
+.page-leave-to :deep(.player-anchor) {
   transform: translateY(100%);
 }
 
@@ -141,8 +173,10 @@ function onAfterLeave() {
   .page-leave-active .scrim,
   .page-enter-active .page-close,
   .page-leave-active .page-close,
-  .page-enter-active :deep(.slim),
-  .page-leave-active :deep(.slim) {
+  .page-enter-active .sheet,
+  .page-leave-active .sheet,
+  .page-enter-active :deep(.player-anchor),
+  .page-leave-active :deep(.player-anchor) {
     transition: none;
   }
 }

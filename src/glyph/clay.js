@@ -393,11 +393,29 @@ export function mountGlyph(canvas, glyph = {}) {
     drawn = false
   }
 
+  function onKey(event) {
+    if (event.altKey || event.metaKey || event.ctrlKey) return
+    const step = event.shiftKey ? 0.4 : 0.18
+    if (event.key === "ArrowLeft") state.yaw -= step
+    else if (event.key === "ArrowRight") state.yaw += step
+    else if (event.key === "ArrowUp") state.pitch = Math.min(1.15, Math.max(-1.15, state.pitch - step))
+    else if (event.key === "ArrowDown") state.pitch = Math.min(1.15, Math.max(-1.15, state.pitch + step))
+    else if (event.key === "Enter" || event.key === " ") onDoubleClick()
+    else return
+    event.preventDefault()
+    state.dragging = false
+    state.leveling = event.key === "Enter" || event.key === " "
+    state.vy = 0
+    state.vp = 0
+    drawn = false
+  }
+
   canvas.addEventListener("pointerdown", onDown)
   canvas.addEventListener("pointermove", onMove)
   canvas.addEventListener("pointerup", onUp)
   canvas.addEventListener("pointercancel", onUp)
   canvas.addEventListener("dblclick", onDoubleClick)
+  canvas.addEventListener("keydown", onKey)
   motion.addEventListener("change", onMotion)
 
   const observed = new ResizeObserver(() => {
@@ -424,6 +442,7 @@ export function mountGlyph(canvas, glyph = {}) {
     canvas.removeEventListener("pointerup", onUp)
     canvas.removeEventListener("pointercancel", onUp)
     canvas.removeEventListener("dblclick", onDoubleClick)
+    canvas.removeEventListener("keydown", onKey)
     motion.removeEventListener("change", onMotion)
     gl.deleteProgram(program)
   }

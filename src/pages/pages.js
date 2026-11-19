@@ -1,6 +1,7 @@
 // Pages open over the grid. The kind decides how.
 //
 // slim       A narrow column. About, Team, and other reading.
+// player     A centered video. Walkthroughs.
 // takeover   A wide sheet with margins, so the grid still shows around it. Gallery.
 // rearrange  No sheet. The grid itself moves. News.
 //
@@ -13,7 +14,7 @@ export const pages = {
     label: "About",
     navTitle: "About",
     title:
-      "We keep the Figma Design department on one board, so the work in progress can sit out where we can see it. We design Figma, and we also keep a room for the work while it is still moving. A launch is one kind of truth. The board is another: the studies, the type, the pictures, and the pages that are not ready to leave the room. We put them out because looking changes the work. A thing kept in a file can be defended. A thing on the board has to hold up next to its neighbors, in the light, at the size a person will actually meet it. That is a kinder test than a meeting, and a stricter one. What follows is how we try to work. These are not rules, and they are not a brand. They are the ideas we come back to when a study is still finding its shape, and when we have to decide what a page is for.",
+      "Figma Design is a working gallery, a single board where our creativity stays visible, shared, and accountable. We celebrate every stage, from sketch to system, and we put it out where we can see it because seeing changes the work. A launch is one kind of truth; the board is our everyday truth. Studies, type, images, and flows sit next to their neighbors at the size and context a person will meet them. Files can be defended; work in the open has to earn its place. That’s a kinder test than a meeting, and a stricter one. This space lets us showcase what we’re making while it’s moving, and it keeps us honest about what a page is for. What follows is how we work: practical principles, not rules or a brand. They help a study find its shape and turn creativity into useful, shippable design.",
     sections: [
       {
         heading: "Show the work",
@@ -40,5 +41,15 @@ export const pages = {
         body: "Nothing here is sealed. A page can stay, change, or come down once it has been seen enough. Permanence is a kind of vanity. Some studies need a week. Some need a season. The board should be able to tell the difference without a ceremony. Open also means we can be wrong in front of each other. A direction that looked right on Tuesday can look thin on Friday, and taking it down is not a failure. It is the reason for having the work out where we can see it. A closed page can only be admired. An open one can still be changed.",
       },
     ],
+  },
+  walkthrough: {
+    id: "walkthrough",
+    kind: "player",
+    label: "File walkthrough",
+    navTitle: "File walkthrough",
+    episode: "Ep. 001",
+    title: "Code Layer Experiments",
+    guest: "Nikolas Klein",
+    src: `${import.meta.env.BASE_URL}walktrhough.mov`,
   },
 }

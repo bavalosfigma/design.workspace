@@ -1,9 +1,10 @@
 <script setup>
-const { open = false, styles, current, readout } = defineProps({
+const { open = false, styles, current, readout, locked = false } = defineProps({
   open: Boolean,
   styles: { type: Array, required: true },
   current: { type: String, required: true },
   readout: { type: Array, required: true },
+  locked: Boolean,
 })
 
 const emit = defineEmits(["choose"])
@@ -15,7 +16,7 @@ function choose(id) {
 
 <template>
   <Transition name="menu">
-    <aside v-if="open" class="menu" aria-label="Grid styles">
+    <aside v-if="open" class="menu" aria-label="Grid styles" :inert="locked ? true : undefined">
       <header class="menu-head">
         <span>Styles</span>
         <kbd class="menu-key">M</kbd>
@@ -70,7 +71,7 @@ function choose(id) {
 }
 
 .menu-head {
-  opacity: 0.55;
+  color: var(--muted);
 }
 
 .menu-key {

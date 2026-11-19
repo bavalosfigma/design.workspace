@@ -1,5 +1,7 @@
 <script setup>
-import { onBeforeUnmount, ref } from "vue"
+import { computed, onBeforeUnmount, ref } from "vue"
+
+const emit = defineEmits(["open"])
 
 const shots = [
   { src: `${import.meta.env.BASE_URL}gallery/back.png`, alt: "Person in a Geneva sweatshirt carrying a blue tote" },
@@ -10,6 +12,7 @@ const shots = [
 
 const count = shots.length
 const frontIndex = ref(count - 1)
+const status = computed(() => `${shots[frontIndex.value].alt}. Photo ${frontIndex.value + 1} of ${count}.`)
 const motion = ref("")
 let settle = 0
 
@@ -34,6 +37,10 @@ function showNext() {
   cycle(1)
 }
 
+function openGallery() {
+  emit("open", "gallery")
+}
+
 onBeforeUnmount(() => {
   window.clearTimeout(settle)
 })
@@ -46,7 +53,7 @@ onBeforeUnmount(() => {
         <span>Gallery</span>
         <span>Recently Added</span>
       </p>
-      <button type="button" class="button gallery-open">Open Gallery</button>
+      <button type="button" class="button gallery-open" @click="openGallery">Open Gallery</button>
     </div>
     <div class="gallery-stage">
       <div class="gallery-stack">
@@ -60,10 +67,15 @@ onBeforeUnmount(() => {
             'is-to-front': motion === 'prev' && depth(i) === 0,
           }"
         >
-          <img :src="shot.src" :alt="shot.alt" />
+          <img
+            :src="shot.src"
+            :alt="depth(i) === 0 ? shot.alt : ''"
+            :aria-hidden="depth(i) === 0 ? undefined : true"
+          />
         </div>
       </div>
     </div>
+    <p class="visually-hidden" aria-live="polite">{{ status }}</p>
     <div class="gallery-arrows">
       <button type="button" aria-label="Previous photo" @click="showPrev">
         <span class="flip">→</span>
@@ -185,7 +197,7 @@ onBeforeUnmount(() => {
 }
 
 .gallery-labels span:first-child {
-  opacity: 0.4;
+  color: var(--muted);
 }
 
 .gallery-open {

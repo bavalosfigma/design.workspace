@@ -51,10 +51,11 @@ function learnMore() {
   line-height: 1.1;
   letter-spacing: -0.045em;
   text-box: trim-both cap alphabetic;
-  opacity: 0.4;
+  color: var(--muted);
 }
 
 .about-copy {
+  max-width: 440px;
   margin: 0 0 1.5rem;
   font-size: 1.5rem;
   font-weight: 500;

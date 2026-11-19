@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, shallowRef } from "vue"
+import { computed, nextTick, shallowRef } from "vue"
 
 const slides = [
   { src: `${import.meta.env.BASE_URL}store/tote.png`, alt: "Blue Figma tote bag", label: "Tote" },
@@ -13,6 +13,11 @@ const count = slides.length
 const index = shallowRef(0)
 const shift = shallowRef(0)
 const arm = shallowRef(0)
+const labelIndex = computed(() => {
+  const dir = shift.value < 0 ? 1 : shift.value > 0 ? -1 : arm.value
+  if (!dir) return index.value
+  return (index.value + (dir > 0 ? 1 : count - 1)) % count
+})
 
 function baseSlot(i) {
   let delta = i - index.value
@@ -91,13 +96,16 @@ function onKey(event) {
         />
       </div>
     </div>
+    <p class="visually-hidden" aria-live="polite">
+      {{ slides[labelIndex].label }}, {{ labelIndex + 1 }} of {{ slides.length }}
+    </p>
     <div class="foot">
-      <p class="label">{{ slides[index].label }}</p>
+      <p class="label">{{ slides[labelIndex].label }}</p>
       <div class="controls">
         <button type="button" aria-label="Previous item" @click="step(-1)">
           <span class="flip">→</span>
         </button>
-        <p class="count">{{ index + 1 }}/{{ slides.length }}</p>
+        <p class="count">{{ labelIndex + 1 }}/{{ slides.length }}</p>
         <button type="button" aria-label="Next item" @click="step(1)">→</button>
       </div>
     </div>
@@ -141,12 +149,12 @@ function onKey(event) {
 }
 
 .slide {
-  --stride: 400px;
+  --stride: 500px;
   position: absolute;
-  top: 0;
+  top: -50px;
   left: 50%;
-  width: 307px;
-  height: 461px;
+  width: 383.75px;
+  height: 576.25px;
   object-fit: cover;
   transform: translateX(-50%) translateX(calc((var(--slot) + var(--shift, 0)) * var(--stride)));
   transition: transform 520ms cubic-bezier(0.22, 1, 0.3, 1);

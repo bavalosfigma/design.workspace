@@ -21,7 +21,8 @@ onUnmounted(() => {
     ref="canvas"
     class="glyph"
     :style="{ background: glyph.background }"
-    aria-label="Clay glyph. Drag to turn it. Double-click to level it."
+    tabindex="0"
+    aria-label="Clay glyph. Use the arrow keys to turn it, or drag. Press Enter to level it."
   ></canvas>
 </template>
 

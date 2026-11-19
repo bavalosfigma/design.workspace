@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref } from "vue"
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue"
 
 const slides = [
   { src: `${import.meta.env.BASE_URL}offsite/workflows.png`, alt: "A person presenting beside a screen that reads The New Workflows" },
@@ -14,6 +14,11 @@ const count = slides.length
 const index = ref(0)
 const shift = ref(0)
 const arm = ref(0)
+const labelIndex = computed(() => {
+  const dir = shift.value < 0 ? 1 : shift.value > 0 ? -1 : arm.value
+  if (!dir) return index.value
+  return (index.value + (dir > 0 ? 1 : count - 1)) % count
+})
 const root = ref(null)
 const footEl = ref(null)
 const nudge = ref("0px")
@@ -126,13 +131,16 @@ function onKey(event) {
         />
       </div>
     </div>
+    <p class="visually-hidden" aria-live="polite">
+      {{ slides[labelIndex].alt }}. Photo {{ labelIndex + 1 }} of {{ slides.length }}.
+    </p>
     <div ref="footEl" class="foot">
       <p class="label">Team Offsite 2026</p>
       <div class="controls">
         <button type="button" aria-label="Previous photo" @click="step(-1)">
           <span class="flip">→</span>
         </button>
-        <p class="count">{{ index + 1 }}/{{ slides.length }}</p>
+        <p class="count">{{ labelIndex + 1 }}/{{ slides.length }}</p>
         <button type="button" aria-label="Next photo" @click="step(1)">→</button>
       </div>
     </div>

@@ -6,17 +6,22 @@
 // Row height grows with the window, so the whole score scales.
 // Each seat then nudges — a margin and a shift — so the edges miss
 // each other and a card can tuck into the hole above it.
-// A phone drops the nudge. Every card is the board's full width and
+// At 1200px and under, the three-across desk score becomes two equal
+// columns. Cards stay 4:5, the 40px gap stays, and the nudges drop.
+// A phone drops the nudge too. Every card is the board's full width and
 // the next card starts below it.
 //
-// Every card is 4:5. Width comes from the column span and the
-// horizontal margins. Height is that width times 5/4. Row spans still
-// reserve the seat; they do not set the box.
+// Every card is 4:5, except a seat marked `hug`. Width still comes from
+// the column span and the horizontal margins. A portrait card's height
+// is that width times 5/4. A hugging card keeps the width and takes its
+// height from its content, once that height has been measured.
+// Row spans still reserve the seat; they do not set the box.
 //
 // Nudge units: vw (percent of the window), cn (22px, or the phone
 // gutter), gutter (the page margin), row (one row).
 
 const PHONE = 768
+const TWO_COL = 1200
 const WIDE = 1520
 const MARGIN = 64
 const TOP = 200
@@ -28,6 +33,11 @@ const gutter = (n) => ({ gutter: n })
 const row = (n) => ({ row: n })
 
 const PHONE_SCORE = [{ col: 1, span: 1, rows: 1 }]
+
+const TWO_COL_SCORE = [
+  { col: 1, span: 1, rows: 1 },
+  { col: 2, span: 1, rows: 1 },
+]
 
 const DESK_SCORE = [
   { col: 1, span: 5, rows: 6 },
@@ -65,27 +75,35 @@ export const mosaic = [
   { id: "m2", widget: "offsite" },
   { id: "m3", widget: "glyph" },
   { id: "m4", widget: "gallery" },
-  { id: "m5" },
+  { id: "m5", widget: "cd" },
   { id: "m6", widget: "store" },
   { id: "m7", widget: "jelly" },
-  { id: "m8" },
-  { id: "m9" },
-  { id: "m10" },
-  { id: "m11" },
+  { id: "m8", widget: "articles", hug: true },
+  { id: "m9", widget: "books" },
+  { id: "m10", widget: "dots" },
+  { id: "m11", widget: "walkthrough", hug: true },
   { id: "m12" },
 ]
 
-export function layoutMosaic(list, width) {
+export function layoutMosaic(list, width, heights = {}) {
   const inner = Math.max(240, width - MARGIN * 2)
-  const ctx = metrics(inner)
+  const ctx = metrics(inner, width)
   ctx.padY = TOP
-  const score = ctx.mode === "phone" ? PHONE_SCORE : ctx.mode === "wide" ? WIDE_SCORE : DESK_SCORE
+  ctx.heights = heights
+  const score =
+    ctx.mode === "phone"
+      ? PHONE_SCORE
+      : ctx.mode === "columns"
+        ? TWO_COL_SCORE
+        : ctx.mode === "wide"
+          ? WIDE_SCORE
+          : DESK_SCORE
   const seats = list.map((item, index) => ({ ...item, ...score[index % score.length] }))
-  const placed = ctx.mode === "phone" ? placeIntrinsic(seats, ctx) : placeFixed(seats, ctx)
+  const placed = ctx.mode === "phone" || ctx.mode === "columns" ? placeIntrinsic(seats, ctx) : placeFixed(seats, ctx)
   let stack = ctx.padY
   const items = placed.map((item) => {
     const w = Math.round(item.w)
-    const h = Math.round(w * PORTRAIT)
+    const h = boxHeight(item, w, heights)
     // Phone is one column, so stack the rounded boxes. Rounding each
     // seat on its own leaves a 1px gap that drifts down the page.
     const y = ctx.mode === "phone" ? stack : Math.round(item.y)
@@ -112,10 +130,11 @@ export function layoutMosaic(list, width) {
   }
 }
 
-function metrics(width) {
+function metrics(width, viewport = width) {
   const phone = width < PHONE
-  const wide = width >= WIDE
-  const columns = phone ? 1 : 12
+  const columnsMode = !phone && viewport <= TWO_COL
+  const wide = !phone && !columnsMode && width >= WIDE
+  const columns = phone ? 1 : columnsMode ? 2 : 12
   const padX = phone ? 0 : 80
   const gap = phone ? 20 : 40
   const gutterSize = padX
@@ -131,7 +150,7 @@ function metrics(width) {
           : width * 0.067
 
   return {
-    mode: phone ? "phone" : wide ? "wide" : "desk",
+    mode: phone ? "phone" : columnsMode ? "columns" : wide ? "wide" : "desk",
     width,
     vw: width / 100,
     columns,
@@ -193,7 +212,7 @@ function placeIntrinsic(list, ctx) {
     const mb = unit(item.mb, ctx)
     const w = item.span * ctx.colW + (item.span - 1) * ctx.gap - ml - mr
 
-    return { ...item, row, ml, mr, mt, mb, w, contentH: w * PORTRAIT }
+    return { ...item, row, ml, mr, mt, mb, w, contentH: boxHeight(item, w, ctx.heights, false) }
   })
 
   const band = new Map()
@@ -221,6 +240,13 @@ function blocked(occupied, col, row, span, rows) {
   return occupied.some(
     (other) => col < other.col + other.span && col + span > other.col && row < other.row + other.rows && row + rows > other.row,
   )
+}
+
+function boxHeight(item, w, heights, round = true) {
+  const measured = item.hug ? heights?.[item.id] : 0
+  if (measured) return measured
+  const height = w * PORTRAIT
+  return round ? Math.round(height) : height
 }
 
 function unit(part, ctx) {

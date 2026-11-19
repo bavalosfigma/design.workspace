@@ -12,7 +12,7 @@ const { label, links, open = false, page = false } = defineProps({
   page: Boolean,
 })
 
-const emit = defineEmits(["toggle"])
+const emit = defineEmits(["toggle", "select"])
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
@@ -21,6 +21,10 @@ const motion = computed(() => (reduceMotion ? 0 : { leave: leaveMs, enter: enter
 
 function toggle() {
   emit("toggle")
+}
+
+function select(link) {
+  emit("select", link)
 }
 </script>
 
@@ -32,7 +36,7 @@ function toggle() {
           <img class="nav-close-icon" :src="closeIcon" alt="" />
         </button>
         <div class="nav-links">
-          <button v-for="link in links" :key="link" type="button" class="nav-link">{{ link }}</button>
+          <button v-for="link in links" :key="link" type="button" class="nav-link" @click="select(link)">{{ link }}</button>
         </div>
         <span class="nav-balance" aria-hidden="true"></span>
       </div>
@@ -58,6 +62,8 @@ function toggle() {
   width: max-content;
   min-width: 346px;
   height: 39px;
+  /* 100vw includes the scrollbar and 50% does not, so this holds the bar still when the gutter comes and goes. */
+  margin-left: calc((100vw - 100%) / 2);
   transform: translateX(-50%);
   transform-origin: center top;
   font-family: "Figma Sans VF", "Figma Sans", sans-serif;
@@ -120,12 +126,6 @@ function toggle() {
   cursor: pointer;
 }
 
-.nav.is-page .nav-name {
-  width: 272px;
-  min-width: 272px;
-  padding: 0 8px;
-}
-
 .nav.is-page .nav-menu {
   background: linear-gradient(rgb(255 255 255 / 0.3), rgb(255 255 255 / 0.3)), #000;
   color: #fff;
@@ -147,9 +147,11 @@ function toggle() {
 
 .nav-close {
   position: relative;
+  display: grid;
   flex: none;
-  width: 12px;
-  height: 12px;
+  place-items: center;
+  width: 24px;
+  height: 24px;
   margin: 0;
   padding: 0;
   border: 0;
@@ -159,17 +161,15 @@ function toggle() {
 }
 
 .nav-close-icon {
-  position: absolute;
-  top: 0.15px;
-  left: 0.65px;
   display: block;
-  max-width: none;
+  width: 11px;
+  height: 11px;
 }
 
 .nav-balance {
   flex: none;
-  width: 12px;
-  height: 12px;
+  width: 24px;
+  height: 24px;
 }
 
 .nav-links {
@@ -179,8 +179,11 @@ function toggle() {
 }
 
 .nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   margin: 0;
-  padding: 0;
+  padding: 8px 0;
   border: 0;
   background: transparent;
   color: inherit;
