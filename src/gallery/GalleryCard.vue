@@ -2,10 +2,10 @@
 import { onBeforeUnmount, ref } from "vue"
 
 const shots = [
-  { src: "/gallery/back.png", alt: "Person in a Geneva sweatshirt carrying a blue tote" },
-  { src: "/gallery/mid.png", alt: "Framed Figma posters along a hallway" },
-  { src: "/gallery/posters.png", alt: "Colorful graphic posters" },
-  { src: "/gallery/front.png", alt: "Person holding a Hello Kitty Figma poster" },
+  { src: `${import.meta.env.BASE_URL}gallery/back.png`, alt: "Person in a Geneva sweatshirt carrying a blue tote" },
+  { src: `${import.meta.env.BASE_URL}gallery/mid.png`, alt: "Framed Figma posters along a hallway" },
+  { src: `${import.meta.env.BASE_URL}gallery/posters.png`, alt: "Colorful graphic posters" },
+  { src: `${import.meta.env.BASE_URL}gallery/front.png`, alt: "Person holding a Hello Kitty Figma poster" },
 ]
 
 const count = shots.length

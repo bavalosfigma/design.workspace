@@ -2,11 +2,11 @@
 import { nextTick, shallowRef } from "vue"
 
 const slides = [
-  { src: "/store/tote.png", alt: "Blue Figma tote bag", label: "Tote" },
-  { src: "/store/tee.png", alt: "Orange t-shirt with a character drawing", label: "Tee" },
-  { src: "/store/sleeve.png", alt: "White long-sleeve shirt that reads time to make", label: "Long Sleeve" },
-  { src: "/store/socks.png", alt: "Green and blue checkerboard socks", label: "Socks" },
-  { src: "/store/software.png", alt: "Yellow t-shirt that reads Idea Software", label: "Software" },
+  { src: `${import.meta.env.BASE_URL}store/tote.png`, alt: "Blue Figma tote bag", label: "Tote" },
+  { src: `${import.meta.env.BASE_URL}store/tee.png`, alt: "Orange t-shirt with a character drawing", label: "Tee" },
+  { src: `${import.meta.env.BASE_URL}store/sleeve.png`, alt: "White long-sleeve shirt that reads time to make", label: "Long Sleeve" },
+  { src: `${import.meta.env.BASE_URL}store/socks.png`, alt: "Green and blue checkerboard socks", label: "Socks" },
+  { src: `${import.meta.env.BASE_URL}store/software.png`, alt: "Yellow t-shirt that reads Idea Software", label: "Software" },
 ]
 
 const count = slides.length

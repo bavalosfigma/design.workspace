@@ -2,12 +2,12 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from "vue"
 
 const slides = [
-  { src: "/offsite/workflows.png", alt: "A person presenting beside a screen that reads The New Workflows" },
-  { src: "/offsite/taste.png", alt: "A talk with a red character and the words Disable Taste on the screen" },
-  { src: "/offsite/tiles.jpg", alt: "A person presenting in front of a blue tiled wall" },
-  { src: "/offsite/board.png", alt: "Two people standing at a whiteboard" },
-  { src: "/offsite/table.png", alt: "Two people talking at a table with flowers" },
-  { src: "/offsite/room.jpg", alt: "A crowded room during a workshop" },
+  { src: `${import.meta.env.BASE_URL}offsite/workflows.png`, alt: "A person presenting beside a screen that reads The New Workflows" },
+  { src: `${import.meta.env.BASE_URL}offsite/taste.png`, alt: "A talk with a red character and the words Disable Taste on the screen" },
+  { src: `${import.meta.env.BASE_URL}offsite/tiles.jpg`, alt: "A person presenting in front of a blue tiled wall" },
+  { src: `${import.meta.env.BASE_URL}offsite/board.png`, alt: "Two people standing at a whiteboard" },
+  { src: `${import.meta.env.BASE_URL}offsite/table.png`, alt: "Two people talking at a table with flowers" },
+  { src: `${import.meta.env.BASE_URL}offsite/room.jpg`, alt: "A crowded room during a workshop" },
 ]
 
 const count = slides.length
