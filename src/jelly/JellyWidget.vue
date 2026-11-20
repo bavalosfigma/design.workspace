@@ -241,7 +241,6 @@ onUnmounted(() => {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  cursor: pointer;
 }
 
 .light-panel {
@@ -334,6 +333,5 @@ onUnmounted(() => {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  cursor: pointer;
 }
 </style>

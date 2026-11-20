@@ -2,7 +2,9 @@
 import { computed, nextTick, onMounted, onUnmounted, provide, readonly, shallowRef, watch } from "vue"
 import { resolvePage } from "./pages/pages.js"
 import { layoutById, layoutFromHash, layouts } from "./layouts.js"
+import { layoutMosaic } from "./mosaic.js"
 import { layoutFilms } from "./walkthrough/layout.js"
+import HomeIntro from "./home/HomeIntro.vue"
 import { provideCardOptions } from "./options.js"
 import { site } from "./site.js"
 import { useViewport } from "./composables/useViewport.js"
@@ -20,6 +22,7 @@ const stackRefresh = shallowRef(0)
 provide("gallery-stack-refresh", readonly(stackRefresh))
 
 const styleId = shallowRef(layoutFromHash(location.hash).id)
+const cursors = shallowRef(false)
 const menuOpen = shallowRef(false)
 const navOpen = shallowRef(false)
 const openId = shallowRef(null)
@@ -44,6 +47,7 @@ const { width, ready, measure } = useViewport(() => {
   return blocking || phase.value !== "idle" || wallPhase.value !== "idle"
 })
 const contentHeights = shallowRef(Object.create(null))
+const introSpace = shallowRef(0)
 
 const current = computed(() => layoutById(styleId.value))
 
@@ -55,9 +59,15 @@ const filmPage = computed(() => {
   return page
 })
 
+const showIntro = computed(() => styleId.value === "mosaic" && filmPage.value == null)
+
 const board = computed(() => {
   const films = filmPage.value
   if (films) return layoutFilms(films.films, width.value, contentHeights.value)
+  if (showIntro.value) {
+    const top = introSpace.value > 0 ? introSpace.value : Math.max(window.innerHeight - 96, 320)
+    return layoutMosaic(current.value.items, width.value, contentHeights.value, top)
+  }
   return current.value.place(current.value.items, width.value, contentHeights.value)
 })
 
@@ -103,7 +113,7 @@ watch(phase, (value) => {
 
 watch([openId, phase, shotLabel], () => {
   const pageName = resolvePage(openId.value)?.navTitle
-  const galleryName = phase.value !== "idle" && phase.value !== "return" ? "Canvas" : ""
+  const galleryName = phase.value !== "idle" && phase.value !== "return" ? "Gallery" : ""
   const name = pageName || shotLabel.value || galleryName
   document.title = name ? `${name} — ${site.name}` : baseTitle
 })
@@ -113,10 +123,19 @@ function onMeasure({ id, height }) {
   contentHeights.value = { ...contentHeights.value, [id]: height }
 }
 
+function onIntroMeasure(height) {
+  if (introSpace.value === height) return
+  introSpace.value = height
+}
+
 function choose(id) {
   const layout = layoutById(id)
   styleId.value = layout.id
   history.replaceState(null, "", layout.hash || location.pathname + location.search)
+}
+
+function toggleCursors() {
+  cursors.value = !cursors.value
 }
 
 function isTyping(event) {
@@ -305,7 +324,7 @@ function goHome() {
 
 function onNavSelect(link) {
   const name = String(link).toLowerCase()
-  if (name === "canvas") openGallery()
+  if (name === "gallery") openGallery()
   if (name === "home") goHome()
   if (name === "about") openPage("about")
 }
@@ -394,7 +413,9 @@ onUnmounted(() => {
     :title="site.name"
     @open="openPage"
     @measure="onMeasure"
-  />
+  >
+    <HomeIntro v-if="showIntro" :hidden="overlay" :cursors="cursors" @measure="onIntroMeasure" @open="openPage" />
+  </Board>
   <SiteNav :label="navLabel" :links="site.links" :open="navOpen" :page="pageOpen" @toggle="toggleNav" @select="onNavSelect" />
   <StyleMenu
     :open="menuOpen"
@@ -402,7 +423,9 @@ onUnmounted(() => {
     :current="styleId"
     :readout="readout"
     :locked="overlay"
+    :cursors="cursors"
     @choose="choose"
+    @cursors="toggleCursors"
   />
   <PageLayer :id="openId" @close="closePage" @closed="restoreFocus" />
   <Transition name="gallery" :duration="galleryMotion" @before-leave="onGalleryLeave" @after-leave="onGalleryLeft">

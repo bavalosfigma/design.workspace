@@ -1,4 +1,4 @@
 export const site = {
   name: "Figma Design Dept.",
-  links: ["Home", "About", "Canvas", "Apply"],
+  links: ["Home", "About", "Gallery", "Apply"],
 }

@@ -239,10 +239,6 @@ function onKey(event) {
   object-fit: cover;
 }
 
-.cover.is-side {
-  cursor: pointer;
-}
-
 .cover.is-out {
   visibility: hidden;
   pointer-events: none;
@@ -309,7 +305,6 @@ function onKey(event) {
   color: inherit;
   font-family: inherit;
   font-variation-settings: inherit;
-  cursor: pointer;
 }
 
 .count {

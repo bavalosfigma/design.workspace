@@ -262,7 +262,6 @@ onBeforeUnmount(() => {
   font-variation-settings: inherit;
   text-box: none;
   transform: translate(-50%, -50%);
-  cursor: pointer;
   touch-action: manipulation;
 }
 

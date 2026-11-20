@@ -244,7 +244,6 @@ onUnmounted(() => {
   color: inherit;
   font: inherit;
   letter-spacing: inherit;
-  cursor: pointer;
 }
 
 .power-label {
@@ -367,7 +366,6 @@ onUnmounted(() => {
   letter-spacing: inherit;
   text-box: normal;
   pointer-events: auto;
-  cursor: pointer;
 }
 
 .key-face {

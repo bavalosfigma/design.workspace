@@ -131,6 +131,7 @@ function measureFalls(items, scroll, height) {
     :data-mode="board.mode"
     :style="frameStyle"
   >
+    <slot />
     <h1 class="visually-hidden">{{ title }}</h1>
     <div
       v-for="item in placed"

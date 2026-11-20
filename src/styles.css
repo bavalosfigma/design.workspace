@@ -6,6 +6,13 @@
   --module: #c8c8c2;
   --ease: cubic-bezier(0.47, 1.64, 0.41, 0.8);
   --move: 560ms;
+  --cursor: url("./assets/cursor.png") 10 10, auto;
+}
+
+@supports (cursor: image-set(url("./assets/cursor.png") 1x, url("./assets/cursor@2x.png") 2x) 10 10, auto) {
+  :root {
+    --cursor: image-set(url("./assets/cursor.png") 1x, url("./assets/cursor@2x.png") 2x) 10 10, auto;
+  }
 }
 
 * {
@@ -19,6 +26,27 @@ html {
   font-optical-sizing: auto;
   text-wrap: pretty;
   scrollbar-gutter: stable;
+  cursor: var(--cursor);
+}
+
+a:any-link,
+area[href],
+button,
+summary,
+label,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"],
+input[type="image"],
+[role="button"],
+[role="link"],
+[role="tab"],
+[role="menuitem"],
+[role="option"] {
+  cursor: var(--cursor);
 }
 
 html,
@@ -117,6 +145,7 @@ body:has(.page-layer:not(.is-player)) .module {
 
 .module {
   position: absolute;
+  z-index: 1;
   background: var(--module);
   border-radius: 4px;
   overflow: hidden;
@@ -139,7 +168,6 @@ body:has(.page-layer:not(.is-player)) .module {
   font-variation-settings: "wdth" 100;
   letter-spacing: -0.03em;
   line-height: 1.1;
-  cursor: pointer;
 }
 
 .button:hover {
