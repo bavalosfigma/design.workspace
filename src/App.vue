@@ -127,7 +127,8 @@ const cardsAway = computed(
 )
 const galleryShown = computed(() => phase.value === "open")
 const galleryMotion = { enter: 1, leave: reduceMotion ? 0 : 1100 }
-const baseTitle = document.title
+const baseTitle = site.name
+document.title = baseTitle
 
 watch(phase, (value) => {
   if (value !== "open") shotLabel.value = ""
