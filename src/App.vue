@@ -13,6 +13,28 @@ import SiteNav from "./nav/SiteNav.vue"
 import StyleMenu from "./menu/StyleMenu.vue"
 import PageLayer from "./pages/PageLayer.vue"
 import GalleryLayer from "./gallery/GalleryLayer.vue"
+import Gate from "./gate/Gate.vue"
+
+const gateKey = "wip-open"
+
+function storedOpen() {
+  try {
+    return sessionStorage.getItem(gateKey) === "1"
+  } catch {
+    return false
+  }
+}
+
+const unlocked = shallowRef(storedOpen())
+
+function unlock() {
+  unlocked.value = true
+  try {
+    sessionStorage.setItem(gateKey, "1")
+  } catch {
+    // Storage can be blocked. The page still opens for this load.
+  }
+}
 
 const dropMs = 980
 const returnMs = 740
@@ -352,6 +374,7 @@ function toggleNav() {
 }
 
 function onKey(event) {
+  if (!unlocked.value) return
   if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return
   if (isTyping(event)) return
   if (event.key === "Escape") {
@@ -402,33 +425,36 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <a class="skip-link" href="#main">Skip to content</a>
-  <Board
-    :board="board"
-    :ready="ready"
-    :style-id="styleId"
-    :locked="boardLocked"
-    :away="cardsAway"
-    :arrive="arriving"
-    :title="site.name"
-    @open="openPage"
-    @measure="onMeasure"
-  >
-    <HomeIntro v-if="showIntro" :hidden="overlay" :cursors="cursors" @measure="onIntroMeasure" @open="openPage" />
-  </Board>
-  <SiteNav :label="navLabel" :links="site.links" :open="navOpen" :page="pageOpen" @toggle="toggleNav" @select="onNavSelect" />
-  <StyleMenu
-    :open="menuOpen"
-    :styles="styleOptions"
-    :current="styleId"
-    :readout="readout"
-    :locked="overlay"
-    :cursors="cursors"
-    @choose="choose"
-    @cursors="toggleCursors"
-  />
-  <PageLayer :id="openId" @close="closePage" @closed="restoreFocus" />
-  <Transition name="gallery" :duration="galleryMotion" @before-leave="onGalleryLeave" @after-leave="onGalleryLeft">
-    <GalleryLayer v-if="galleryShown" :dismiss="shotDismiss" :quiet="openId !== null" @view="onShot" />
-  </Transition>
+  <Gate v-if="!unlocked" @open="unlock" />
+  <template v-else>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Board
+      :board="board"
+      :ready="ready"
+      :style-id="styleId"
+      :locked="boardLocked"
+      :away="cardsAway"
+      :arrive="arriving"
+      :title="site.name"
+      @open="openPage"
+      @measure="onMeasure"
+    >
+      <HomeIntro v-if="showIntro" :hidden="overlay" :cursors="cursors" @measure="onIntroMeasure" @open="openPage" />
+    </Board>
+    <SiteNav :label="navLabel" :links="site.links" :open="navOpen" :page="pageOpen" @toggle="toggleNav" @select="onNavSelect" />
+    <StyleMenu
+      :open="menuOpen"
+      :styles="styleOptions"
+      :current="styleId"
+      :readout="readout"
+      :locked="overlay"
+      :cursors="cursors"
+      @choose="choose"
+      @cursors="toggleCursors"
+    />
+    <PageLayer :id="openId" @close="closePage" @closed="restoreFocus" />
+    <Transition name="gallery" :duration="galleryMotion" @before-leave="onGalleryLeave" @after-leave="onGalleryLeft">
+      <GalleryLayer v-if="galleryShown" :dismiss="shotDismiss" :quiet="openId !== null" @view="onShot" />
+    </Transition>
+  </template>
 </template>

@@ -1,37 +1,40 @@
 <script setup>
 import { computed, nextTick, shallowRef } from "vue"
 
-const byline = "Submitted  by Brendon Avalos"
-
 const books = [
   {
     src: `${import.meta.env.BASE_URL}books/program.png`,
     alt: "Cover of A New Program for Graphic Design by David Reinfurt",
     title: "A New Program for Graphic Design",
+    by: "Brendon",
     ratio: 666 / 1000,
   },
   {
     src: `${import.meta.env.BASE_URL}books/pasta.png`,
     alt: "Cover of The Book of Pasta, published by Phaidon",
     title: "The Book of Pasta",
+    by: "Taryn",
     ratio: 754 / 994,
   },
   {
     src: `${import.meta.env.BASE_URL}books/visual.png`,
     alt: "Cover of Design and Visual Communication by Bruno Munari",
     title: "Design and Visual Communication",
+    by: "Kat",
     ratio: 576 / 886,
   },
   {
     src: `${import.meta.env.BASE_URL}books/dublab.png`,
     alt: "Cover of dublab: Future Roots Radio",
     title: "dublab: Future Roots Radio",
+    by: "Jefferson",
     ratio: 614 / 819,
   },
   {
     src: `${import.meta.env.BASE_URL}books/japan.png`,
     alt: "Cover of Japan Works by Aglaia Konrad",
     title: "Japan Works",
+    by: "Maria",
     ratio: 792 / 1000,
   },
 ]
@@ -46,7 +49,8 @@ const labelIndex = computed(() => {
   return (index.value + (dir > 0 ? 1 : count - 1)) % count
 })
 const book = computed(() => books[labelIndex.value])
-const status = computed(() => `${book.value.title}. ${byline}. ${labelIndex.value + 1} of ${count}.`)
+const byline = computed(() => `Submitted  by ${book.value.by}`)
+const status = computed(() => `${book.value.title}. ${byline.value}. ${labelIndex.value + 1} of ${count}.`)
 
 function baseSlot(i) {
   let delta = i - index.value
