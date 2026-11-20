@@ -1,20 +1,22 @@
 <script setup>
 import { computed, nextTick, ref, watch } from "vue"
-import { pages } from "./pages.js"
+import { resolvePage } from "./pages.js"
 import { useFocusTrap } from "../composables/useFocusTrap.js"
 import PlayerPage from "./PlayerPage.vue"
 import SlimPage from "./SlimPage.vue"
+import WalkthroughsPage from "../walkthrough/WalkthroughsPage.vue"
 
 const props = defineProps({
   id: { type: String, default: null },
 })
 
-const emit = defineEmits(["close", "closed"])
+const emit = defineEmits(["close", "closed", "open"])
 
 const root = ref(null)
 const closeButton = ref(null)
-const page = computed(() => (props.id ? pages[props.id] ?? null : null))
+const page = computed(() => resolvePage(props.id))
 let gridScroll = 0
+let heldScroll = false
 
 useFocusTrap(
   () => root.value,
@@ -25,17 +27,54 @@ function close() {
   emit("close")
 }
 
-watch(page, async (value) => {
+function open(id) {
+  emit("open", id)
+}
+
+function holdScroll() {
+  const root = document.documentElement
+  if (root.classList.contains("is-grid-locked")) return
+  heldScroll = true
+  root.classList.add("is-grid-locked")
+}
+
+function releaseScroll() {
+  if (!heldScroll) return
+  heldScroll = false
+  document.documentElement.classList.remove("is-grid-locked")
+}
+
+function placeScroll(y) {
+  window.scrollTo(0, y)
+  requestAnimationFrame(() => {
+    if (window.scrollY !== y) window.scrollTo(0, y)
+  })
+}
+
+watch(page, async (value, previous) => {
   if (!value) return
-  gridScroll = window.scrollY
-  document.documentElement.style.setProperty("--grid-lock", `${gridScroll}px`)
-  window.scrollTo(0, 0)
+  if (value.kind === "player") {
+    if (!previous) gridScroll = window.scrollY
+    await nextTick()
+    document.documentElement.style.removeProperty("--grid-lock")
+    holdScroll()
+    placeScroll(gridScroll)
+    closeButton.value?.focus({ preventScroll: true })
+    return
+  }
+  if (!previous) {
+    releaseScroll()
+    gridScroll = window.scrollY
+    document.documentElement.style.setProperty("--grid-lock", `${gridScroll}px`)
+    window.scrollTo(0, 0)
+  }
   await nextTick()
   closeButton.value?.focus()
 })
 
 function onAfterLeave() {
   if (page.value) return
+  releaseScroll()
   document.documentElement.style.removeProperty("--grid-lock")
   window.scrollTo(0, gridScroll)
   emit("closed")
@@ -61,6 +100,7 @@ function onAfterLeave() {
       </button>
       <div v-if="page.kind !== 'player'" class="sheet">
         <SlimPage v-if="page.kind === 'slim'" :page="page" />
+        <WalkthroughsPage v-else-if="page.kind === 'films'" :page="page" @open="open" />
       </div>
       <PlayerPage v-else :page="page" />
     </div>

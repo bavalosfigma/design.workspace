@@ -8,6 +8,10 @@ const film = pages.walkthrough
 function play() {
   emit("open", film.id)
 }
+
+function viewAll() {
+  emit("open", "walkthroughs")
+}
 </script>
 
 <template>
@@ -19,14 +23,17 @@ function play() {
         {{ film.title }}<br />
         w/{{ film.guest }}
       </p>
-      <button
-        type="button"
-        class="button watch"
-        :aria-label="`Watch ${film.title} with ${film.guest}`"
-        @click="play"
-      >
-        Watch
-      </button>
+      <div class="actions">
+        <button
+          type="button"
+          class="button watch"
+          :aria-label="`Watch ${film.title} with ${film.guest}`"
+          @click="play"
+        >
+          Watch
+        </button>
+        <button type="button" class="button all" aria-label="View all file walkthroughs" @click="viewAll">View all</button>
+      </div>
     </div>
   </article>
 </template>
@@ -78,7 +85,16 @@ function play() {
   color: #874fff;
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.all,
 .watch {
+  flex: none;
   padding-inline: 24px;
 }
 </style>

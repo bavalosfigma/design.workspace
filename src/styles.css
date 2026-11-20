@@ -92,19 +92,19 @@ body {
   position: relative;
 }
 
-body:has(.page-layer) {
+body:has(.page-layer:not(.is-player)) {
   background-attachment: fixed;
   background-position: 0 calc(-1 * var(--grid-lock, 0px));
 }
 
-body:has(.page-layer) .board {
+body:has(.page-layer:not(.is-player)) .board {
   position: fixed;
   top: calc(-1 * var(--grid-lock, 0px));
   left: 0;
   transition: none;
 }
 
-body:has(.page-layer) .module {
+body:has(.page-layer:not(.is-player)) .module {
   transition: none;
 }
 

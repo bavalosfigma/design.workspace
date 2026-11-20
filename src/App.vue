@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, provide, readonly, shallowRef, watch } from "vue"
-import { pages } from "./pages/pages.js"
+import { resolvePage } from "./pages/pages.js"
 import { layoutById, layoutFromHash, layouts } from "./layouts.js"
 import { provideCardOptions } from "./options.js"
 import { site } from "./site.js"
@@ -54,7 +54,7 @@ const readout = computed(() => [
 
 const overlay = computed(() => openId.value !== null || phase.value !== "idle")
 const pageOpen = computed(() => openId.value !== null || shotLabel.value !== "")
-const navLabel = computed(() => pages[openId.value]?.navTitle || shotLabel.value || site.name)
+const navLabel = computed(() => resolvePage(openId.value)?.navTitle || shotLabel.value || site.name)
 const cardsAway = computed(() => phase.value === "drop" || phase.value === "open" || phase.value === "lift")
 const galleryShown = computed(() => phase.value === "open")
 const galleryMotion = { enter: 1, leave: reduceMotion ? 0 : 1100 }
@@ -65,7 +65,7 @@ watch(phase, (value) => {
 })
 
 watch([openId, phase, shotLabel], () => {
-  const pageName = pages[openId.value]?.navTitle
+  const pageName = resolvePage(openId.value)?.navTitle
   const galleryName = phase.value !== "idle" && phase.value !== "return" ? "Canvas" : ""
   const name = pageName || shotLabel.value || galleryName
   document.title = name ? `${name} — ${site.name}` : baseTitle
@@ -93,8 +93,10 @@ function openPage(id) {
     openGallery()
     return
   }
-  if (!pages[id]) return
-  pageReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  if (!resolvePage(id)) return
+  if (openId.value === null) {
+    pageReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  }
   navOpen.value = false
   openId.value = id
 }
@@ -159,7 +161,7 @@ function closePage() {
 function restoreFocus() {
   const back = pageReturnFocus
   pageReturnFocus = null
-  back?.focus()
+  back?.focus({ preventScroll: true })
   measure()
 }
 
@@ -271,7 +273,7 @@ onUnmounted(() => {
     :locked="overlay"
     @choose="choose"
   />
-  <PageLayer :id="openId" @close="closePage" @closed="restoreFocus" />
+  <PageLayer :id="openId" @close="closePage" @closed="restoreFocus" @open="openPage" />
   <Transition name="gallery" :duration="galleryMotion" @before-leave="onGalleryLeave" @after-leave="onGalleryLeft">
     <GalleryLayer v-if="galleryShown" :dismiss="shotDismiss" :quiet="openId !== null" @view="onShot" />
   </Transition>

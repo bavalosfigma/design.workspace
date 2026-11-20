@@ -1,6 +1,9 @@
+import { walkthroughFilms } from "../walkthrough/films.js"
+
 // Pages open over whatever is already on screen, home board or canvas. The kind decides how.
 //
 // slim       A narrow column. About, Team, and other reading.
+// films      A narrow column of video links. The walkthrough index.
 // player     A centered video. Walkthroughs.
 // takeover   A wide sheet with margins, so the grid still shows around it. Canvas.
 // rearrange  No sheet. The grid itself moves. News.
@@ -52,4 +55,18 @@ export const pages = {
     guest: "Nikolas Klein",
     src: `${import.meta.env.BASE_URL}walktrhough.mov`,
   },
+  walkthroughs: {
+    id: "walkthroughs",
+    kind: "films",
+    label: "File walkthroughs",
+    navTitle: "File walkthroughs",
+    title: "File walkthroughs",
+    lede: "Go behind the scenes on projects and our product on how it gets made.",
+    films: walkthroughFilms,
+  },
+}
+
+export function resolvePage(id) {
+  if (!id) return null
+  return pages[id] ?? null
 }

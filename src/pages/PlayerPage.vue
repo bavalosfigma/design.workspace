@@ -7,7 +7,7 @@ defineProps({
 <template>
   <div class="player-anchor">
     <article class="player">
-      <div class="frame">
+      <div v-if="page.src" class="frame">
         <video
           class="video"
           :src="page.src"
@@ -18,7 +18,7 @@ defineProps({
         ></video>
       </div>
       <h2 id="page-title" class="name">
-        <span class="episode">{{ page.episode }}</span>
+        <span v-if="page.episode" class="episode">{{ page.episode }}</span>
         {{ page.title }}<br />
         w/{{ page.guest }}
       </h2>
