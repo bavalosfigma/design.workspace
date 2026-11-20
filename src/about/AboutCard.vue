@@ -51,7 +51,8 @@ function learnMore() {
   line-height: 1.1;
   letter-spacing: -0.045em;
   text-box: trim-both cap alphabetic;
-  color: var(--muted);
+  color: #000;
+  opacity: 1;
 }
 
 .about-copy {

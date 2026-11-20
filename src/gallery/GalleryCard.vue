@@ -1,87 +1,226 @@
 <script setup>
-import { computed, onBeforeUnmount, ref } from "vue"
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, useTemplateRef, watch } from "vue"
+import { previewIds, shots as galleryShots } from "./shots.js"
 
 const emit = defineEmits(["open"])
 
-const shots = [
-  { src: `${import.meta.env.BASE_URL}gallery/back.png`, alt: "Person in a Geneva sweatshirt carrying a blue tote" },
-  { src: `${import.meta.env.BASE_URL}gallery/mid.png`, alt: "Framed Figma posters along a hallway" },
-  { src: `${import.meta.env.BASE_URL}gallery/posters.png`, alt: "Colorful graphic posters" },
-  { src: `${import.meta.env.BASE_URL}gallery/front.png`, alt: "Person holding a Hello Kitty Figma poster" },
-]
+const shots = previewIds.map((id) => {
+  const shot = galleryShots.find((item) => item.id === id)
+  return { src: shot.src, alt: shot.alt }
+})
 
-const count = shots.length
-const frontIndex = ref(count - 1)
-const status = computed(() => `${shots[frontIndex.value].alt}. Photo ${frontIndex.value + 1} of ${count}.`)
-const motion = ref("")
-let settle = 0
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+const ease = "cubic-bezier(0.4, 0, 0.2, 1)"
+const stage = useTemplateRef("stage")
+const deck = ref(shots.map((shot) => ({ src: shot.src, alt: shot.alt })))
+const exits = ref([])
+const held = shallowRef(!reduceMotion)
+const dealing = shallowRef(!reduceMotion)
+const flights = new Set()
+let taken = 0
+let flightId = 0
+let alive = true
+
+registerDeal()
+
+const done = computed(() => deck.value.length === 0)
+const status = computed(() => {
+  const top = deck.value[deck.value.length - 1]
+  if (!top) return "That's all."
+  return `${top.alt}. Photo ${deck.value.length} of ${shots.length}.`
+})
 
 function depth(i) {
-  return (frontIndex.value - i + count) % count
+  return deck.value.length - 1 - i
 }
 
-function cycle(direction) {
-  motion.value = direction > 0 ? "next" : "prev"
-  frontIndex.value = (frontIndex.value + (direction > 0 ? count - 1 : 1)) % count
-  window.clearTimeout(settle)
-  settle = window.setTimeout(() => {
-    motion.value = ""
-  }, 680)
+function freshDeck() {
+  return shots.map((shot) => ({ src: shot.src, alt: shot.alt }))
 }
 
-function showPrev() {
-  cycle(-1)
+function dismiss() {
+  if (dealing.value) return
+  const top = deck.value[deck.value.length - 1]
+  const root = stage.value
+  if (!top || !root) return
+  const node = root.querySelector("[data-depth='0'] img")
+  const from = node?.getBoundingClientRect()
+  const bounds = root.getBoundingClientRect()
+  const side = taken % 2 === 0 ? 1 : -1
+  taken += 1
+  deck.value = deck.value.slice(0, -1)
+  if (reduceMotion || !from || !bounds.width) return
+  const distance = side > 0 ? bounds.right - from.left + 12 : from.right - bounds.left + 12
+  const exit = {
+    id: ++flightId,
+    src: top.src,
+    left: from.left - bounds.left,
+    top: from.top - bounds.top,
+    width: from.width,
+    height: from.height,
+    x: side * distance,
+    y: -20,
+    turn: side * 8,
+  }
+  exits.value = [...exits.value, exit]
+  nextTick(() => play(exit))
 }
 
-function showNext() {
-  cycle(1)
+function play(exit) {
+  const node = stage.value?.querySelector(`[data-flight="${exit.id}"]`)
+  if (!node) return
+  const animation = node.animate(
+    [
+      { transform: "translate3d(0px, 0px, 0px) rotate(0deg)" },
+      { transform: `translate3d(${exit.x}px, ${exit.y}px, 0px) rotate(${exit.turn}deg)` },
+    ],
+    { duration: 540, easing: ease, fill: "forwards" },
+  )
+  flights.add(animation)
+  animation.onfinish = () => {
+    flights.delete(animation)
+    exits.value = exits.value.filter((item) => item.id !== exit.id)
+  }
 }
 
 function openGallery() {
   emit("open", "gallery")
 }
 
-onBeforeUnmount(() => {
-  window.clearTimeout(settle)
+function refresh() {
+  for (const animation of flights) animation.cancel()
+  flights.clear()
+  exits.value = []
+  taken = 0
+  deck.value = freshDeck()
+  held.value = !reduceMotion
+  dealing.value = !reduceMotion
+  nextTick(() => begin())
+}
+
+function begin() {
+  if (!alive) return
+  if (reduceMotion) {
+    held.value = false
+    dealing.value = false
+    return
+  }
+  const root = stage.value
+  if (!root) return
+  const images = [...root.querySelectorAll(".shot img")]
+  const decoded = Promise.all(images.map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())))
+  const timeout = new Promise((resolve) => window.setTimeout(resolve, 700))
+  Promise.race([decoded, timeout]).then(() => {
+    requestAnimationFrame(() => deal())
+  })
+}
+
+function deal() {
+  const root = stage.value
+  if (!alive || !root) return
+  const stack = root.querySelector(".gallery-stack")
+  const bounds = root.getBoundingClientRect()
+  const local = stack?.offsetWidth || 0
+  const visual = stack?.getBoundingClientRect().width || 0
+  const scale = local > 0 && visual > 0 ? visual / local : 1
+  const cards = [...root.querySelectorAll(".shot")].sort((a, b) => Number(b.dataset.depth) - Number(a.dataset.depth))
+  if (!cards.length || !bounds.width) {
+    held.value = false
+    dealing.value = false
+    return
+  }
+  const animations = cards.map((el, index) => {
+    const from = el.querySelector("img").getBoundingClientRect()
+    const side = index % 2 === 0 ? -1 : 1
+    const distance = side > 0 ? bounds.right - from.left + 16 : from.right - bounds.left + 16
+    const animation = el.animate(
+      [
+        { "--deal-x": `${(side * distance) / scale}px`, "--deal-y": `${-20 / scale}px`, "--deal-turn": `${side * 8}deg` },
+        { "--deal-x": "0px", "--deal-y": "0px", "--deal-turn": "0deg" },
+      ],
+      { duration: 540, delay: index * 70, easing: ease, fill: "backwards" },
+    )
+    flights.add(animation)
+    animation.onfinish = () => flights.delete(animation)
+    return animation.finished.catch(() => {})
+  })
+  held.value = false
+  Promise.all(animations).then(() => {
+    if (alive) dealing.value = false
+  })
+}
+
+const stackRefresh = inject("gallery-stack-refresh", null)
+if (stackRefresh) watch(stackRefresh, () => refresh())
+
+function onPageShow(event) {
+  if (event.persisted) refresh()
+}
+
+onMounted(() => {
+  window.addEventListener("pageshow", onPageShow)
+  begin()
 })
+
+onBeforeUnmount(() => {
+  alive = false
+  window.removeEventListener("pageshow", onPageShow)
+  for (const animation of flights) animation.cancel()
+  flights.clear()
+})
+
+function registerDeal() {
+  if (typeof CSS === "undefined" || !CSS.registerProperty) return
+  const props = [
+    ["--deal-x", "<length>", "0px"],
+    ["--deal-y", "<length>", "0px"],
+    ["--deal-turn", "<angle>", "0deg"],
+  ]
+  for (const [name, syntax, initialValue] of props) {
+    try {
+      CSS.registerProperty({ name, syntax, inherits: false, initialValue })
+    } catch {
+      // Registered by an earlier load of this card.
+    }
+  }
+}
 </script>
 
 <template>
   <article class="gallery">
     <div class="gallery-bar">
       <p class="gallery-labels">
-        <span>Gallery</span>
-        <span>Recently Added</span>
+        <span class="gallery-name">Canvas</span>
+        <span class="gallery-recent">Recently Added</span>
       </p>
-      <button type="button" class="button gallery-open" @click="openGallery">Open Gallery</button>
+      <button type="button" class="button gallery-open" @click="openGallery">View canvas</button>
     </div>
-    <div class="gallery-stage">
-      <div class="gallery-stack">
-        <div
-          v-for="(shot, i) in shots"
-          :key="shot.src"
-          class="shot"
-          :data-depth="depth(i)"
-          :class="{
-            'is-to-back': motion === 'next' && depth(i) === count - 1,
-            'is-to-front': motion === 'prev' && depth(i) === 0,
-          }"
-        >
-          <img
-            :src="shot.src"
-            :alt="depth(i) === 0 ? shot.alt : ''"
-            :aria-hidden="depth(i) === 0 ? undefined : true"
-          />
+    <div ref="stage" class="gallery-stage">
+      <p v-if="done" class="gallery-done">That's all.</p>
+      <div class="gallery-stack" :class="{ 'is-held': held }">
+        <div v-for="(shot, i) in deck" :key="shot.src" class="shot" :data-depth="depth(i)">
+          <button v-if="depth(i) === 0" type="button" class="shot-hit" :aria-label="`Remove ${shot.alt}`" @click="dismiss">
+            <img :src="shot.src" alt="" />
+          </button>
+          <img v-else :src="shot.src" alt="" aria-hidden="true" />
         </div>
       </div>
+      <img
+        v-for="exit in exits"
+        :key="exit.id"
+        class="flyer"
+        :data-flight="exit.id"
+        :src="exit.src"
+        alt=""
+        :style="{
+          left: `${exit.left}px`,
+          top: `${exit.top}px`,
+          width: `${exit.width}px`,
+          height: `${exit.height}px`,
+        }"
+      />
     </div>
     <p class="visually-hidden" aria-live="polite">{{ status }}</p>
-    <div class="gallery-arrows">
-      <button type="button" aria-label="Previous photo" @click="showPrev">
-        <span class="flip">→</span>
-      </button>
-      <button type="button" aria-label="Next photo" @click="showNext">→</button>
-    </div>
   </article>
 </template>
 
@@ -90,7 +229,7 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   background: #fdfdfd;
   border-radius: inherit;
@@ -99,13 +238,9 @@ onBeforeUnmount(() => {
   font-variation-settings: "wdth" 100;
 }
 
-.gallery-bar,
-.gallery-arrows {
+.gallery-bar {
   position: relative;
   z-index: 1;
-}
-
-.gallery-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -121,8 +256,24 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+.gallery-done {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 16px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+  text-align: center;
+}
+
 .gallery-stack {
   position: absolute;
+  z-index: 1;
   top: 50%;
   left: 50%;
   width: 433.19px;
@@ -132,15 +283,19 @@ onBeforeUnmount(() => {
   transform-origin: center;
 }
 
+.gallery-stack.is-held .shot {
+  opacity: 0;
+}
+
 .shot {
   position: absolute;
   top: 50%;
   left: 50%;
   z-index: 1;
   width: max-content;
-  transform: translate(-50%, -50%) scale(0.92);
+  transform: translate(calc(-50% + var(--deal-x, 0px)), calc(-50% + var(--deal-y, 0px))) rotate(var(--deal-turn, 0deg))
+    scale(0.92);
   transform-origin: center;
-  transition: transform 620ms cubic-bezier(0.22, 0.75, 0.2, 1);
 }
 
 .shot img {
@@ -149,35 +304,51 @@ onBeforeUnmount(() => {
   height: auto;
   max-width: 340px;
   max-height: 320px;
-  pointer-events: none;
 }
 
 .shot[data-depth="0"] {
   z-index: 4;
-  transform: translate(-50%, -50%) scale(1);
+  transform: translate(calc(-50% + var(--deal-x, 0px)), calc(-50% + var(--deal-y, 0px))) rotate(var(--deal-turn, 0deg))
+    scale(1);
 }
 
 .shot[data-depth="1"] {
   z-index: 3;
-  transform: translate(calc(-50% + 18px), calc(-50% + 14px)) scale(0.92);
+  transform: translate(calc(-50% + 18px + var(--deal-x, 0px)), calc(-50% + 14px + var(--deal-y, 0px)))
+    rotate(var(--deal-turn, 0deg)) scale(0.92);
 }
 
 .shot[data-depth="2"] {
   z-index: 2;
-  transform: translate(calc(-50% - 20px), calc(-50% + 8px)) scale(0.92);
+  transform: translate(calc(-50% - 20px + var(--deal-x, 0px)), calc(-50% + 8px + var(--deal-y, 0px)))
+    rotate(var(--deal-turn, 0deg)) scale(0.92);
 }
 
 .shot[data-depth="3"] {
   z-index: 1;
-  transform: translate(calc(-50% + 6px), calc(-50% - 16px)) scale(0.92);
+  transform: translate(calc(-50% + 6px + var(--deal-x, 0px)), calc(-50% - 16px + var(--deal-y, 0px)))
+    rotate(var(--deal-turn, 0deg)) scale(0.92);
 }
 
-.shot.is-to-back {
-  animation: gallery-tuck 620ms linear;
+.shot-hit {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  line-height: 0;
+  cursor: pointer;
 }
 
-.shot.is-to-front {
-  z-index: 6;
+.shot-hit:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 4px;
+}
+
+.flyer {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .gallery-labels {
@@ -196,75 +367,16 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-.gallery-labels span:first-child {
-  color: var(--muted);
+.gallery-name {
+  opacity: 1;
+}
+
+.gallery-recent {
+  opacity: 0.5;
 }
 
 .gallery-open {
   flex: none;
   margin-left: auto;
-}
-
-.gallery-arrows button:hover {
-  background: rgba(0, 0, 0, 0.16);
-}
-
-.gallery-arrows button:active {
-  background: rgba(0, 0, 0, 0.22);
-}
-
-.gallery-arrows button:focus-visible {
-  outline: 2px solid #000;
-  outline-offset: 3px;
-}
-
-.gallery-arrows {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 16px 20px;
-}
-
-.gallery-arrows button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: rgba(0, 0, 0, 0.1);
-  color: #000;
-  font: inherit;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.63px;
-  cursor: pointer;
-}
-
-.flip {
-  display: block;
-  transform: rotate(180deg);
-}
-
-@keyframes gallery-tuck {
-  0%,
-  42% {
-    z-index: 6;
-  }
-
-  43%,
-  100% {
-    z-index: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .shot,
-  .shot.is-to-back {
-    transition: none;
-    animation: none;
-  }
 }
 </style>

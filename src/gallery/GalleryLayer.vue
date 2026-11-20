@@ -4,8 +4,9 @@ import { useFocusTrap } from "../composables/useFocusTrap.js"
 import { frame, shots } from "./shots.js"
 import { usePan } from "./usePan.js"
 
-const { dismiss = 0 } = defineProps({
+const { dismiss = 0, quiet = false } = defineProps({
   dismiss: { type: Number, default: 0 },
+  quiet: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(["view"])
@@ -22,8 +23,18 @@ let returnFocus = null
 
 useFocusTrap(
   () => dialog.value,
-  () => active.value !== null,
+  () => active.value !== null && !quiet,
 )
+
+function prepareExit(root) {
+  if (!root) return
+  const bottom = window.innerHeight
+  root.querySelectorAll(".shot").forEach((shot) => {
+    const top = shot.getBoundingClientRect().top
+    const distance = Math.ceil(bottom - top + 48)
+    shot.style.setProperty("--exit", `${Math.max(distance, 0)}px`)
+  })
+}
 
 function place(shot) {
   return {
@@ -31,6 +42,7 @@ function place(shot) {
     top: `${shot.y}px`,
     width: `${shot.w}px`,
     animationDelay: `${shot.delay}ms`,
+    "--shot-delay": `${shot.delay}ms`,
     zIndex: shot.delay,
   }
 }
@@ -59,6 +71,7 @@ function stepShot(delta) {
 }
 
 function onKey(event) {
+  if (quiet) return
   if (event.metaKey || event.ctrlKey || event.altKey) return
   if (activeId.value) {
     if (event.key === "ArrowLeft") stepShot(-1)
@@ -90,12 +103,17 @@ watch(activeId, async (id, previous) => {
   closeButton.value?.focus()
 })
 
-onMounted(() => window.addEventListener("keydown", onKey))
+onMounted(() => {
+  const root = viewport.value
+  // The template ref is already cleared when the leave hook runs.
+  root.prepareExit = () => prepareExit(root)
+  window.addEventListener("keydown", onKey)
+})
 onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
 </script>
 
 <template>
-  <div ref="viewport" class="viewport" role="region" aria-label="Gallery">
+  <div ref="viewport" class="viewport" role="region" aria-label="Canvas" :inert="quiet ? true : undefined">
     <p class="visually-hidden">Select a picture to view it larger. Drag to move the pictures, or use the arrow keys.</p>
     <div
       class="stage"
@@ -120,7 +138,15 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
     </div>
     <Teleport to="body">
       <Transition name="lightbox" :duration="520">
-        <div v-if="active" ref="dialog" class="lightbox" role="dialog" aria-modal="true" :aria-label="active.label">
+        <div
+          v-if="active"
+          ref="dialog"
+          class="lightbox"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="active.label"
+          :inert="quiet ? true : undefined"
+        >
           <div class="scrim" @click="closeLightbox"></div>
           <button ref="closeButton" type="button" class="lightbox-close" aria-label="Close" @click="closeLightbox">
             <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -139,6 +165,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
               :alt="active.alt"
               :style="{ '--shot-aspect': String(1 / active.ratio) }"
             />
+            <figcaption class="lightbox-caption">{{ active.label }}</figcaption>
           </figure>
           <button type="button" class="lightbox-nav lightbox-next" aria-label="Next picture" @click="stepShot(1)">
             <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -162,12 +189,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
   font-variation-settings: "wdth" 100;
 }
 
-.viewport.gallery-leave-active {
-  transition: opacity 280ms ease;
+.viewport.gallery-leave-active .shot {
+  animation: none;
+  transition: transform 720ms cubic-bezier(0.4, 0, 0.7, 0.2);
+  transition-delay: var(--shot-delay, 0ms);
 }
 
-.viewport.gallery-leave-to {
-  opacity: 0;
+.viewport.gallery-leave-to .shot {
+  transform: translateY(var(--exit, calc(100vh + 100% + 48px)));
 }
 
 .stage {
@@ -242,7 +271,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
   place-items: center;
   padding: 104px 0 40px;
   --lightbox-gutter: 144px;
-  --lightbox-chrome: 180px;
+  --lightbox-caption: 32px;
+  --lightbox-chrome: calc(180px + var(--lightbox-caption));
   pointer-events: none;
   font-family: "Figma Sans VF", "Figma Sans", sans-serif;
   font-variation-settings: "wdth" 100;
@@ -270,6 +300,16 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
   height: auto;
   max-height: calc(100vh - var(--lightbox-chrome));
   background: #d4d4d4;
+}
+
+.lightbox-caption {
+  display: block;
+  margin: 12px 0 0;
+  color: rgb(255 255 255 / 50%);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .lightbox-close {
@@ -386,7 +426,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
 
 .lightbox-enter-from .lightbox-frame,
 .lightbox-leave-to .lightbox-frame {
-  transform: translateY(100%);
+  transform: translateY(calc(100vh + 100%));
 }
 
 @keyframes shot-pop {
@@ -399,7 +439,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
 @media (max-width: 640px) {
   .lightbox {
     --lightbox-gutter: 32px;
-    --lightbox-chrome: 220px;
+    --lightbox-chrome: calc(220px + var(--lightbox-caption));
     padding: 72px 16px 80px;
   }
 
@@ -412,6 +452,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
 
 @media (prefers-reduced-motion: reduce) {
   .viewport.gallery-leave-active,
+  .viewport.gallery-leave-active .shot,
+  .viewport.gallery-leave-to .shot,
   .shot,
   .shot:hover {
     transition: none;

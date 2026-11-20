@@ -107,43 +107,45 @@ function onKey(event) {
 </script>
 
 <template>
-  <article class="book" aria-roledescription="carousel" aria-label="Recommended" @keydown="onKey">
+  <article class="book" aria-roledescription="carousel" aria-label="Recommended books" @keydown="onKey">
     <div class="stage">
-      <div class="sheet">
-        <div class="reel" :style="{ '--shift': shift }" @transitionend="settle">
-          <div
-            v-for="(item, i) in books"
-            :key="item.src"
-            class="cover"
-            :class="{ 'is-side': Math.abs(baseSlot(i)) === 1, 'is-out': !shown(i) }"
-            :style="{ '--slot': baseSlot(i), '--ratio': item.ratio }"
-            @click="onSlide(i)"
-          >
-            <img
-              class="shot"
-              :src="item.src"
-              :alt="baseSlot(i) === 0 ? item.alt : ''"
-              :aria-hidden="baseSlot(i) === 0 ? undefined : true"
-              draggable="false"
-            />
-          </div>
+      <div class="reel" :style="{ '--shift': shift }" @transitionend="settle">
+        <div
+          v-for="(item, i) in books"
+          :key="item.src"
+          class="cover"
+          :class="{ 'is-side': Math.abs(baseSlot(i)) === 1, 'is-out': !shown(i) }"
+          :style="{ '--slot': baseSlot(i), '--ratio': item.ratio }"
+          @click="onSlide(i)"
+        >
+          <img
+            class="shot"
+            :src="item.src"
+            :alt="baseSlot(i) === 0 ? item.alt : ''"
+            :aria-hidden="baseSlot(i) === 0 ? undefined : true"
+            draggable="false"
+          />
         </div>
-        <p class="kicker">Recommended</p>
-        <button type="button" class="info">Info</button>
-        <div class="meta">
-          <p class="title">{{ book.title }}</p>
-          <p class="byline">{{ byline }}</p>
-        </div>
-        <div class="controls">
-          <button type="button" aria-label="Previous book" @click="step(-1)">
-            <span class="flip">→</span>
-          </button>
-          <p class="count">{{ labelIndex + 1 }}/{{ count }}</p>
-          <button type="button" aria-label="Next book" @click="step(1)">→</button>
-        </div>
-        <p class="visually-hidden" aria-live="polite">{{ status }}</p>
       </div>
     </div>
+    <div class="bar">
+      <p class="kicker">Recommended books</p>
+      <button type="button" class="button info">Info</button>
+    </div>
+    <div class="foot">
+      <div class="meta">
+        <p class="title">{{ book.title }}</p>
+        <p class="byline">{{ byline }}</p>
+      </div>
+      <div class="controls">
+        <button type="button" aria-label="Previous book" @click="step(-1)">
+          <span class="flip">→</span>
+        </button>
+        <p class="count">{{ labelIndex + 1 }}/{{ count }}</p>
+        <button type="button" aria-label="Next book" @click="step(1)">→</button>
+      </div>
+    </div>
+    <p class="visually-hidden" aria-live="polite">{{ status }}</p>
   </article>
 </template>
 
@@ -166,70 +168,50 @@ function onKey(event) {
   overflow: hidden;
 }
 
-.sheet {
-  position: relative;
+.reel {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 536px;
   height: 670px;
   transform: scale(calc(100cqw / 536px));
   transform-origin: top left;
 }
 
-.sheet p,
-.sheet button {
-  text-box: none;
-}
-
-.reel {
-  position: absolute;
-  inset: 0;
-}
-
 .kicker,
 .title,
-.byline,
-.count,
-.info,
-.controls button {
-  font-size: 14px;
+.byline {
+  font-size: 0.875rem;
   font-weight: 700;
-  line-height: 15.4px;
-  letter-spacing: -0.63px;
+  line-height: 1.1;
+  letter-spacing: -0.045em;
 }
 
-.kicker,
-.info,
-.meta,
-.controls {
+.bar,
+.foot {
   z-index: 1;
 }
 
-.kicker {
+.bar {
   position: absolute;
-  top: 27px;
-  left: 22px;
+  top: 14px;
+  right: 14px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kicker {
+  min-width: 0;
   margin: 0;
-  opacity: 0.4;
-  white-space: nowrap;
+  color: #000;
 }
 
 .info {
-  position: absolute;
-  top: 15px;
-  right: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 40px;
-  margin: 0;
-  padding: 0 24px;
-  border: 0;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.1);
-  color: inherit;
-  font-family: inherit;
-  font-variation-settings: inherit;
-  letter-spacing: -0.42px;
-  cursor: pointer;
+  flex: none;
+  padding-inline: 24px;
 }
 
 .cover {
@@ -267,14 +249,22 @@ function onKey(event) {
   transition: none;
 }
 
-.meta {
+.foot {
   position: absolute;
-  top: 613px;
-  left: 22px;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.meta {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 280px;
+  min-width: 0;
 }
 
 .title,
@@ -284,14 +274,12 @@ function onKey(event) {
 
 .byline {
   opacity: 0.4;
-  white-space: pre;
+  white-space: pre-wrap;
 }
 
 .controls {
-  position: absolute;
-  top: 625px;
-  left: 420px;
   display: flex;
+  flex: none;
   gap: 2px;
   align-items: center;
   width: 92px;
@@ -305,8 +293,11 @@ function onKey(event) {
   justify-content: center;
   height: 24px;
   margin: 0;
-  border-radius: 4px;
   background: rgba(0, 0, 0, 0.1);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.045em;
 }
 
 .controls button {
@@ -314,6 +305,7 @@ function onKey(event) {
   width: 24px;
   padding: 0;
   border: 0;
+  border-radius: 4px;
   color: inherit;
   font-family: inherit;
   font-variation-settings: inherit;
@@ -323,6 +315,7 @@ function onKey(event) {
 .count {
   flex: 1;
   min-width: 0;
+  border-radius: 0;
 }
 
 .flip {

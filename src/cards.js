@@ -4,6 +4,7 @@ import BookCard from "./books/BookCard.vue"
 import CdPlayer from "./cd/CdPlayer.vue"
 import DotsCard from "./dots/DotsCard.vue"
 import GalleryCard from "./gallery/GalleryCard.vue"
+import GlobeCard from "./globe/GlobeCard.vue"
 import GlyphCard from "./glyph/GlyphCard.vue"
 import JellyWidget from "./jelly/JellyWidget.vue"
 import OffsiteCard from "./offsite/OffsiteCard.vue"
@@ -18,6 +19,7 @@ export const cards = {
   cd: CdPlayer,
   dots: DotsCard,
   gallery: GalleryCard,
+  globe: GlobeCard,
   glyph: GlyphCard,
   jelly: JellyWidget,
   offsite: OffsiteCard,

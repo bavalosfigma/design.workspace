@@ -128,7 +128,7 @@ onBeforeUnmount(() => {
 <template>
   <article class="dots" aria-label="Connect the dots">
     <div class="bar">
-      <p class="kicker">Connect</p>
+      <p class="kicker">Connect the dots</p>
       <button type="button" class="button" @click="again">Again</button>
     </div>
     <div ref="field" class="field">
@@ -196,7 +196,8 @@ onBeforeUnmount(() => {
 
 .kicker {
   margin: 0;
-  color: var(--muted);
+  color: #000;
+  opacity: 1;
   font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.1;

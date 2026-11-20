@@ -82,7 +82,7 @@ export const mosaic = [
   { id: "m9", widget: "books" },
   { id: "m10", widget: "dots" },
   { id: "m11", widget: "walkthrough", hug: true },
-  { id: "m12" },
+  { id: "m12", widget: "globe" },
 ]
 
 export function layoutMosaic(list, width, heights = {}) {

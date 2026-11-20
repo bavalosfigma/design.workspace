@@ -70,7 +70,8 @@ function onAfterLeave() {
 <style scoped>
 .page-layer {
   position: relative;
-  z-index: 4;
+  /* Above the canvas and its lightbox (4), below the nav (50). */
+  z-index: 40;
   padding: 104px 0 40px;
   pointer-events: none;
   font-family: "Figma Sans VF", "Figma Sans", sans-serif;

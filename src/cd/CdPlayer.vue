@@ -38,6 +38,7 @@ const track = useTemplateRef("track")
 function syncTrack() {
   const audio = track.value
   if (!audio) return
+  audio.volume = 0.15
   const shouldPlay = powered.value && playing.value && forward.value
   if (!shouldPlay) {
     audio.pause()

@@ -1,7 +1,8 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, shallowRef, watch } from "vue"
+import { computed, nextTick, onMounted, onUnmounted, provide, readonly, shallowRef, watch } from "vue"
 import { pages } from "./pages/pages.js"
 import { layoutById, layoutFromHash, layouts } from "./layouts.js"
+import { provideCardOptions } from "./options.js"
 import { site } from "./site.js"
 import { useViewport } from "./composables/useViewport.js"
 import Board from "./board/Board.vue"
@@ -14,6 +15,9 @@ const dropMs = 980
 const returnMs = 740
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
+const stackRefresh = shallowRef(0)
+provide("gallery-stack-refresh", readonly(stackRefresh))
+
 const styleId = shallowRef(layoutFromHash(location.hash).id)
 const menuOpen = shallowRef(false)
 const navOpen = shallowRef(false)
@@ -22,8 +26,10 @@ const phase = shallowRef("idle")
 const shotLabel = shallowRef("")
 const shotDismiss = shallowRef(0)
 let returnFocus = null
+let pageReturnFocus = null
 let galleryTimer = 0
 
+const { toggle: toggleOptions } = provideCardOptions()
 const { width, ready, measure } = useViewport(() => openId.value !== null || phase.value !== "idle")
 const contentHeights = shallowRef(Object.create(null))
 
@@ -51,7 +57,7 @@ const pageOpen = computed(() => openId.value !== null || shotLabel.value !== "")
 const navLabel = computed(() => pages[openId.value]?.navTitle || shotLabel.value || site.name)
 const cardsAway = computed(() => phase.value === "drop" || phase.value === "open" || phase.value === "lift")
 const galleryShown = computed(() => phase.value === "open")
-const galleryMotion = { enter: 1, leave: reduceMotion ? 0 : 280 }
+const galleryMotion = { enter: 1, leave: reduceMotion ? 0 : 1100 }
 const baseTitle = document.title
 
 watch(phase, (value) => {
@@ -60,7 +66,7 @@ watch(phase, (value) => {
 
 watch([openId, phase, shotLabel], () => {
   const pageName = pages[openId.value]?.navTitle
-  const galleryName = phase.value !== "idle" && phase.value !== "return" ? "Gallery" : ""
+  const galleryName = phase.value !== "idle" && phase.value !== "return" ? "Canvas" : ""
   const name = pageName || shotLabel.value || galleryName
   document.title = name ? `${name} — ${site.name}` : baseTitle
 })
@@ -88,7 +94,7 @@ function openPage(id) {
     return
   }
   if (!pages[id]) return
-  returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  pageReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
   navOpen.value = false
   openId.value = id
 }
@@ -121,6 +127,10 @@ function closeGallery() {
   galleryTimer = window.setTimeout(finishGallery, reduceMotion ? 0 : returnMs)
 }
 
+function onGalleryLeave(el) {
+  el.prepareExit?.()
+}
+
 function onGalleryLeft() {
   if (phase.value !== "lift") return
   phase.value = "return"
@@ -132,6 +142,8 @@ function finishGallery() {
   if (phase.value !== "return") return
   phase.value = "idle"
   document.documentElement.classList.remove("is-grid-locked")
+  stackRefresh.value += 1
+  if (openId.value) return
   const back = returnFocus
   returnFocus = null
   nextTick(() => {
@@ -145,8 +157,8 @@ function closePage() {
 }
 
 function restoreFocus() {
-  const back = returnFocus
-  returnFocus = null
+  const back = pageReturnFocus
+  pageReturnFocus = null
   back?.focus()
   measure()
 }
@@ -162,8 +174,9 @@ function goHome() {
 
 function onNavSelect(link) {
   const name = String(link).toLowerCase()
-  if (name === "gallery") openGallery()
+  if (name === "canvas") openGallery()
   if (name === "home") goHome()
+  if (name === "about") openPage("about")
 }
 
 function onShot(label) {
@@ -192,12 +205,12 @@ function onKey(event) {
   if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return
   if (isTyping(event)) return
   if (event.key === "Escape") {
-    if (shotLabel.value) {
-      closeShot()
-      return
-    }
     if (openId.value) {
       closePage()
+      return
+    }
+    if (shotLabel.value) {
+      closeShot()
       return
     }
     if (navOpen.value) {
@@ -216,6 +229,10 @@ function onKey(event) {
     if (import.meta.env.DEV) {
       import("./agentation.js").then(({ toggleAgentation }) => toggleAgentation())
     }
+    return
+  }
+  if (event.key === "o" || event.key === "O") {
+    toggleOptions()
     return
   }
   if (event.key !== "m" && event.key !== "M") return
@@ -255,7 +272,7 @@ onUnmounted(() => {
     @choose="choose"
   />
   <PageLayer :id="openId" @close="closePage" @closed="restoreFocus" />
-  <Transition name="gallery" :duration="galleryMotion" @after-leave="onGalleryLeft">
-    <GalleryLayer v-if="galleryShown" :dismiss="shotDismiss" @view="onShot" />
+  <Transition name="gallery" :duration="galleryMotion" @before-leave="onGalleryLeave" @after-leave="onGalleryLeft">
+    <GalleryLayer v-if="galleryShown" :dismiss="shotDismiss" :quiet="openId !== null" @view="onShot" />
   </Transition>
 </template>
