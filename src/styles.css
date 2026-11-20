@@ -114,15 +114,11 @@ body {
     linear-gradient(to right, var(--line) 1px, transparent 1px),
     linear-gradient(to bottom, var(--line) 1px, transparent 1px);
   background-size: 40px 40px;
+  background-attachment: fixed;
 }
 
 .board {
   position: relative;
-}
-
-body:has(.page-layer:not(.is-player)) {
-  background-attachment: fixed;
-  background-position: 0 calc(-1 * var(--grid-lock, 0px));
 }
 
 body:has(.page-layer:not(.is-player)) .board {
