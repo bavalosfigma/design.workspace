@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, provide, readonly, shallowRef, watch } from "vue"
 import { resolvePage } from "./pages/pages.js"
 import { layoutById, layoutFromHash, layouts } from "./layouts.js"
+import { layoutFilms } from "./walkthrough/layout.js"
 import { provideCardOptions } from "./options.js"
 import { site } from "./site.js"
 import { useViewport } from "./composables/useViewport.js"
@@ -30,12 +31,35 @@ let pageReturnFocus = null
 let galleryTimer = 0
 
 const { toggle: toggleOptions } = provideCardOptions()
-const { width, ready, measure } = useViewport(() => openId.value !== null || phase.value !== "idle")
+const underId = shallowRef(null)
+let catalogScroll = 0
+
+const wallPhase = shallowRef("idle")
+const arriving = shallowRef(false)
+let wallTimer = 0
+
+const { width, ready, measure } = useViewport(() => {
+  const page = resolvePage(openId.value)
+  const blocking = Boolean(page && page.kind !== "rearrange")
+  return blocking || phase.value !== "idle" || wallPhase.value !== "idle"
+})
 const contentHeights = shallowRef(Object.create(null))
 
 const current = computed(() => layoutById(styleId.value))
 
-const board = computed(() => current.value.place(current.value.items, width.value, contentHeights.value))
+const filmPage = computed(() => {
+  const open = resolvePage(openId.value)
+  const under = resolvePage(underId.value)
+  const page = open?.kind === "rearrange" ? open : under?.kind === "rearrange" ? under : null
+  if (wallPhase.value === "leaving") return null
+  return page
+})
+
+const board = computed(() => {
+  const films = filmPage.value
+  if (films) return layoutFilms(films.films, width.value, contentHeights.value)
+  return current.value.place(current.value.items, width.value, contentHeights.value)
+})
 
 const styleOptions = computed(() =>
   layouts.map((layout) => ({
@@ -53,9 +77,22 @@ const readout = computed(() => [
 ])
 
 const overlay = computed(() => openId.value !== null || phase.value !== "idle")
+const boardLocked = computed(() => {
+  if (wallPhase.value !== "idle") return true
+  const page = resolvePage(openId.value)
+  if (page?.kind === "rearrange") return phase.value !== "idle"
+  return overlay.value
+})
 const pageOpen = computed(() => openId.value !== null || shotLabel.value !== "")
 const navLabel = computed(() => resolvePage(openId.value)?.navTitle || shotLabel.value || site.name)
-const cardsAway = computed(() => phase.value === "drop" || phase.value === "open" || phase.value === "lift")
+const cardsAway = computed(
+  () =>
+    phase.value === "drop" ||
+    phase.value === "open" ||
+    phase.value === "lift" ||
+    wallPhase.value === "leaving" ||
+    wallPhase.value === "returning",
+)
 const galleryShown = computed(() => phase.value === "open")
 const galleryMotion = { enter: 1, leave: reduceMotion ? 0 : 1100 }
 const baseTitle = document.title
@@ -93,12 +130,87 @@ function openPage(id) {
     openGallery()
     return
   }
-  if (!resolvePage(id)) return
+  const next = resolvePage(id)
+  if (!next) return
+  const currentPage = resolvePage(openId.value)
   if (openId.value === null) {
     pageReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
   }
+  if (next.kind === "rearrange" && currentPage?.kind !== "rearrange") {
+    beginWall(id)
+    return
+  }
+  if (currentPage?.kind === "rearrange" && next.kind !== "rearrange") underId.value = openId.value
   navOpen.value = false
   openId.value = id
+}
+
+function releaseWallLock() {
+  if (phase.value === "idle" || phase.value === "return") {
+    document.documentElement.classList.remove("is-grid-locked")
+  }
+}
+
+function beginWall(id) {
+  catalogScroll = window.scrollY
+  navOpen.value = false
+  underId.value = null
+  openId.value = id
+  if (reduceMotion) {
+    window.scrollTo(0, 0)
+    return
+  }
+  arriving.value = false
+  wallPhase.value = "leaving"
+  document.documentElement.classList.add("is-grid-locked")
+  window.clearTimeout(wallTimer)
+  wallTimer = window.setTimeout(finishLeave, dropMs)
+}
+
+function finishLeave() {
+  if (wallPhase.value !== "leaving") return
+  arriving.value = true
+  wallPhase.value = "idle"
+  nextTick(() => {
+    window.scrollTo(0, 0)
+    releaseWallLock()
+  })
+}
+
+function beginReturn() {
+  if (wallPhase.value === "returning") return
+  if (reduceMotion || wallPhase.value === "leaving") {
+    window.clearTimeout(wallTimer)
+    const y = wallPhase.value === "leaving" ? window.scrollY : catalogScroll
+    wallPhase.value = "idle"
+    arriving.value = false
+    openId.value = null
+    underId.value = null
+    releaseWallLock()
+    nextTick(() => {
+      window.scrollTo(0, y)
+      restoreFocus()
+    })
+    return
+  }
+  wallPhase.value = "returning"
+  document.documentElement.classList.add("is-grid-locked")
+  window.clearTimeout(wallTimer)
+  wallTimer = window.setTimeout(finishReturn, dropMs)
+}
+
+function finishReturn() {
+  if (wallPhase.value !== "returning") return
+  const y = catalogScroll
+  arriving.value = true
+  openId.value = null
+  underId.value = null
+  wallPhase.value = "idle"
+  nextTick(() => {
+    window.scrollTo(0, y)
+    releaseWallLock()
+    restoreFocus()
+  })
 }
 
 function openGallery() {
@@ -155,10 +267,22 @@ function finishGallery() {
 }
 
 function closePage() {
+  const currentPage = resolvePage(openId.value)
+  if (wallPhase.value === "leaving" || wallPhase.value === "returning" || currentPage?.kind === "rearrange") {
+    beginReturn()
+    return
+  }
+  if (underId.value && currentPage?.kind !== "rearrange") {
+    openId.value = underId.value
+    underId.value = null
+    return
+  }
   openId.value = null
+  underId.value = null
 }
 
 function restoreFocus() {
+  if (resolvePage(openId.value)) return
   const back = pageReturnFocus
   pageReturnFocus = null
   back?.focus({ preventScroll: true })
@@ -168,7 +292,12 @@ function restoreFocus() {
 function goHome() {
   navOpen.value = false
   menuOpen.value = false
-  if (openId.value) closePage()
+  window.clearTimeout(wallTimer)
+  wallPhase.value = "idle"
+  arriving.value = false
+  underId.value = null
+  if (openId.value) openId.value = null
+  releaseWallLock()
   if (phase.value === "drop" || phase.value === "open") closeGallery()
   if (styleId.value !== "mosaic") choose("mosaic")
   window.scrollTo(0, 0)
@@ -248,6 +377,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("keydown", onKey)
   window.clearTimeout(galleryTimer)
+  window.clearTimeout(wallTimer)
   document.documentElement.classList.remove("is-grid-locked")
 })
 </script>
@@ -258,8 +388,9 @@ onUnmounted(() => {
     :board="board"
     :ready="ready"
     :style-id="styleId"
-    :locked="overlay"
+    :locked="boardLocked"
     :away="cardsAway"
+    :arrive="arriving"
     :title="site.name"
     @open="openPage"
     @measure="onMeasure"
@@ -273,7 +404,7 @@ onUnmounted(() => {
     :locked="overlay"
     @choose="choose"
   />
-  <PageLayer :id="openId" @close="closePage" @closed="restoreFocus" @open="openPage" />
+  <PageLayer :id="openId" @close="closePage" @closed="restoreFocus" />
   <Transition name="gallery" :duration="galleryMotion" @before-leave="onGalleryLeave" @after-leave="onGalleryLeft">
     <GalleryLayer v-if="galleryShown" :dismiss="shotDismiss" :quiet="openId !== null" @view="onShot" />
   </Transition>

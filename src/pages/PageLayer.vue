@@ -4,17 +4,20 @@ import { resolvePage } from "./pages.js"
 import { useFocusTrap } from "../composables/useFocusTrap.js"
 import PlayerPage from "./PlayerPage.vue"
 import SlimPage from "./SlimPage.vue"
-import WalkthroughsPage from "../walkthrough/WalkthroughsPage.vue"
 
 const props = defineProps({
   id: { type: String, default: null },
 })
 
-const emit = defineEmits(["close", "closed", "open"])
+const emit = defineEmits(["close", "closed"])
 
 const root = ref(null)
 const closeButton = ref(null)
-const page = computed(() => resolvePage(props.id))
+const page = computed(() => {
+  const value = resolvePage(props.id)
+  if (!value || value.kind === "rearrange") return null
+  return value
+})
 let gridScroll = 0
 let heldScroll = false
 
@@ -25,10 +28,6 @@ useFocusTrap(
 
 function close() {
   emit("close")
-}
-
-function open(id) {
-  emit("open", id)
 }
 
 function holdScroll() {
@@ -100,7 +99,6 @@ function onAfterLeave() {
       </button>
       <div v-if="page.kind !== 'player'" class="sheet">
         <SlimPage v-if="page.kind === 'slim'" :page="page" />
-        <WalkthroughsPage v-else-if="page.kind === 'films'" :page="page" @open="open" />
       </div>
       <PlayerPage v-else :page="page" />
     </div>

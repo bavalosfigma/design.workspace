@@ -170,6 +170,18 @@ body:has(.page-layer:not(.is-player)) .module {
   transition-delay: var(--drop-delay, 0ms);
 }
 
+.board.is-arriving .module {
+  animation: module-pop 560ms cubic-bezier(0.22, 1.25, 0.36, 1) backwards;
+  animation-delay: var(--arrive-delay, 0ms);
+}
+
+@keyframes module-pop {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.92);
+  }
+}
+
 html.is-grid-locked,
 html.is-grid-locked body {
   overflow: hidden;
@@ -178,8 +190,10 @@ html.is-grid-locked body {
 @media (prefers-reduced-motion: reduce) {
   .board.is-ready,
   .board.is-ready .module,
-  .board.is-away .module {
+  .board.is-away .module,
+  .board.is-arriving .module {
     transition: none;
+    animation: none;
   }
 
   .board.is-away .module {

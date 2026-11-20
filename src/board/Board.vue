@@ -2,12 +2,13 @@
 import { computed, onBeforeUnmount, onMounted, shallowRef, useTemplateRef, watch } from "vue"
 import { cards } from "../cards.js"
 
-const { board, ready = false, styleId, locked = false, away = false, title } = defineProps({
+const { board, ready = false, styleId, locked = false, away = false, arrive = false, title } = defineProps({
   board: { type: Object, required: true },
   ready: Boolean,
   styleId: { type: String, required: true },
   locked: Boolean,
   away: Boolean,
+  arrive: Boolean,
   title: { type: String, required: true },
 })
 
@@ -39,6 +40,7 @@ const placed = computed(() =>
     return {
       id: item.id,
       hug: Boolean(item.hug),
+      props: item.props ?? {},
       card: item.widget ? cards[item.widget] ?? null : null,
       style: {
         left: `${item.x}px`,
@@ -53,6 +55,7 @@ const placed = computed(() =>
               "--drop-delay": fall.delay,
             }
           : {}),
+        ...(arrive ? { "--arrive-delay": `${arrivalDelay(item.y)}ms` } : {}),
       },
     }
   }),
@@ -61,8 +64,9 @@ const placed = computed(() =>
 function reportHug(node) {
   const id = node.dataset.module
   const item = board.items.find((entry) => entry.id === id)
-  const box = node.getBoundingClientRect()
-  const height = Math.round(box.height)
+  // offsetHeight ignores the arrival and fall transforms, so a card mid-pop
+  // does not get stored at its scaled size.
+  const height = Math.round(node.offsetHeight)
   if (!item?.hug || height < 1 || Math.abs(item.h - height) <= 1) return
   emit("measure", { id, height })
 }
@@ -91,6 +95,10 @@ watch(
   { flush: "post" },
 )
 
+function arrivalDelay(y) {
+  return Math.round((Math.min(Math.max(y, 0), 1400) / 1400) * 180)
+}
+
 function measureFalls(items, scroll, height) {
   const next = Object.create(null)
   items.forEach((item, index) => {
@@ -117,7 +125,7 @@ function measureFalls(items, scroll, height) {
     id="main"
     tabindex="-1"
     class="board"
-    :class="{ 'is-ready': ready, 'is-away': away }"
+    :class="{ 'is-ready': ready, 'is-away': away, 'is-arriving': arrive }"
     :inert="locked ? true : undefined"
     :data-page="styleId"
     :data-mode="board.mode"
@@ -132,7 +140,7 @@ function measureFalls(items, scroll, height) {
       :data-hug="item.hug ? '' : undefined"
       :style="item.style"
     >
-      <component :is="item.card" v-if="item.card" @open="emit('open', $event)" />
+      <component :is="item.card" v-if="item.card" v-bind="item.props" @open="emit('open', $event)" />
     </div>
   </main>
 </template>

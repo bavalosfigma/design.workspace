@@ -20,7 +20,10 @@ function openFilm() {
       <li v-for="film in page.films" :key="film.id">
         <span class="rule" aria-hidden="true"></span>
         <button type="button" class="film" @click="openFilm">
-          <span class="name">{{ film.title }}</span>
+          <span class="heading">
+            <span class="episode">{{ film.episode }}</span>
+            <span class="name">{{ film.title }}</span>
+          </span>
           <span class="guest">w/ {{ film.guest }}</span>
         </button>
       </li>
@@ -68,33 +71,47 @@ function openFilm() {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 6px;
   width: 100%;
   margin: 0;
-  padding: 8px;
+  padding: 8px 0;
   border: 0;
   background: transparent;
   color: inherit;
   font-family: inherit;
   font-variation-settings: "wdth" 100;
   text-align: left;
+  text-box: normal;
   cursor: pointer;
 }
 
-.name,
-.guest {
+.heading {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  color: #141414;
+  font-size: 25px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.5114px;
+}
+
+.episode,
+.name {
   display: block;
   width: 100%;
 }
 
-.name {
-  font-size: 1.5rem;
-  font-weight: 500;
-  line-height: 1.05;
-  letter-spacing: -0.016em;
+.episode {
+  height: 32px;
+  margin-bottom: -5px;
+  opacity: 0.5;
 }
 
 .guest {
+  display: block;
+  width: 100%;
+  color: #000;
   font-size: 14px;
   font-weight: 700;
   line-height: 15.4px;

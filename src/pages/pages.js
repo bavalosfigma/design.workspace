@@ -3,10 +3,9 @@ import { walkthroughFilms } from "../walkthrough/films.js"
 // Pages open over whatever is already on screen, home board or canvas. The kind decides how.
 //
 // slim       A narrow column. About, Team, and other reading.
-// films      A narrow column of video links. The walkthrough index.
 // player     A centered video. Walkthroughs.
 // takeover   A wide sheet with margins, so the grid still shows around it. Canvas.
-// rearrange  No sheet. The grid itself moves. News.
+// rearrange  No sheet. The home wall leaves, and another wall takes the grid.
 //
 // navTitle   Replaces the department name in the top bar while the page is open.
 
@@ -57,7 +56,7 @@ export const pages = {
   },
   walkthroughs: {
     id: "walkthroughs",
-    kind: "films",
+    kind: "rearrange",
     label: "File walkthroughs",
     navTitle: "File walkthroughs",
     title: "File walkthroughs",
@@ -68,5 +67,17 @@ export const pages = {
 
 export function resolvePage(id) {
   if (!id) return null
-  return pages[id] ?? null
+  if (pages[id]) return pages[id]
+  const film = walkthroughFilms.find((item) => item.id === id)
+  if (!film) return null
+  return {
+    id: film.id,
+    kind: "player",
+    label: "File walkthrough",
+    navTitle: "File walkthrough",
+    episode: film.episode,
+    title: film.title,
+    guest: film.guest,
+    src: pages.walkthrough.src,
+  }
 }

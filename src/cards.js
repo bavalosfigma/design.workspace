@@ -9,6 +9,7 @@ import GlyphCard from "./glyph/GlyphCard.vue"
 import JellyWidget from "./jelly/JellyWidget.vue"
 import OffsiteCard from "./offsite/OffsiteCard.vue"
 import StoreCard from "./store/StoreCard.vue"
+import FilmCard from "./walkthrough/FilmCard.vue"
 import WalkthroughCard from "./walkthrough/WalkthroughCard.vue"
 
 // A seat's `widget` field picks a card. A card may emit `open` with a page id.
@@ -18,6 +19,7 @@ export const cards = {
   books: BookCard,
   cd: CdPlayer,
   dots: DotsCard,
+  film: FilmCard,
   gallery: GalleryCard,
   globe: GlobeCard,
   glyph: GlyphCard,
