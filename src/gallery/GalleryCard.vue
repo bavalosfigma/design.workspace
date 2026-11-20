@@ -190,10 +190,10 @@ function registerDeal() {
   <article class="gallery">
     <div class="gallery-bar">
       <p class="gallery-labels">
-        <span class="gallery-name">Canvas</span>
+        <span class="gallery-name">Gallery</span>
         <span class="gallery-recent">Recently Added</span>
       </p>
-      <button type="button" class="button gallery-open" @click="openGallery">View canvas</button>
+      <button type="button" class="button gallery-open" @click="openGallery">View gallery</button>
     </div>
     <div ref="stage" class="gallery-stage">
       <p v-if="done" class="gallery-done">That's all.</p>
@@ -337,7 +337,6 @@ function registerDeal() {
   background: transparent;
   color: inherit;
   line-height: 0;
-  cursor: pointer;
 }
 
 .shot-hit:focus-visible {

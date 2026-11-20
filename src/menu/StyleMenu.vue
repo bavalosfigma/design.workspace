@@ -1,16 +1,21 @@
 <script setup>
-const { open = false, styles, current, readout, locked = false } = defineProps({
+const { open = false, styles, current, readout, locked = false, cursors = false } = defineProps({
   open: Boolean,
   styles: { type: Array, required: true },
   current: { type: String, required: true },
   readout: { type: Array, required: true },
   locked: Boolean,
+  cursors: Boolean,
 })
 
-const emit = defineEmits(["choose"])
+const emit = defineEmits(["choose", "cursors"])
 
 function choose(id) {
   emit("choose", id)
+}
+
+function toggleCursors() {
+  emit("cursors")
 }
 </script>
 
@@ -35,6 +40,10 @@ function choose(id) {
           <span>{{ style.count }}</span>
         </button>
       </div>
+      <button type="button" class="menu-style menu-option" :class="{ 'is-on': cursors }" :aria-pressed="cursors" @click="toggleCursors">
+        <span>Cursors</span>
+        <span>{{ cursors ? "On" : "Off" }}</span>
+      </button>
       <dl class="menu-readout">
         <div v-for="row in readout" :key="row.label" class="menu-row">
           <dt>{{ row.label }}</dt>
@@ -91,7 +100,13 @@ function choose(id) {
   color: inherit;
   font: inherit;
   text-align: left;
-  cursor: pointer;
+}
+
+.menu-style.menu-option {
+  width: calc(100% + 24px);
+  margin: 6px -12px 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(28, 27, 25, 0.12);
 }
 
 .menu-style.is-on {

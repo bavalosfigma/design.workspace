@@ -1,10 +1,10 @@
 import { walkthroughFilms } from "../walkthrough/films.js"
 
-// Pages open over whatever is already on screen, home board or canvas. The kind decides how.
+// Pages open over whatever is already on screen, home board or gallery. The kind decides how.
 //
 // slim       A narrow column. About, Team, and other reading.
 // player     A centered video. Walkthroughs.
-// takeover   A wide sheet with margins, so the grid still shows around it. Canvas.
+// takeover   A wide sheet with margins, so the grid still shows around it. Gallery.
 // rearrange  No sheet. The home wall leaves, and another wall takes the grid.
 //
 // navTitle   Replaces the department name in the top bar while the page is open.
@@ -16,7 +16,7 @@ export const pages = {
     label: "About",
     navTitle: "About",
     title:
-      "Figma Design is a working canvas, a single board where our creativity stays visible, shared, and accountable. We celebrate every stage, from sketch to system, and we put it out where we can see it because seeing changes the work. A launch is one kind of truth; the board is our everyday truth. Studies, type, images, and flows sit next to their neighbors at the size and context a person will meet them. Files can be defended; work in the open has to earn its place. That’s a kinder test than a meeting, and a stricter one. This space lets us showcase what we’re making while it’s moving, and it keeps us honest about what a page is for. What follows is how we work: practical principles, not rules or a brand. They help a study find its shape and turn creativity into useful, shippable design.",
+      "Figma Design is a working gallery, a single board where our creativity stays visible, shared, and accountable. We celebrate every stage, from sketch to system, and we put it out where we can see it because seeing changes the work. A launch is one kind of truth; the board is our everyday truth. Studies, type, images, and flows sit next to their neighbors at the size and context a person will meet them. Files can be defended; work in the open has to earn its place. That’s a kinder test than a meeting, and a stricter one. This space lets us showcase what we’re making while it’s moving, and it keeps us honest about what a page is for. What follows is how we work: practical principles, not rules or a brand. They help a study find its shape and turn creativity into useful, shippable design.",
     sections: [
       {
         heading: "Show the work",

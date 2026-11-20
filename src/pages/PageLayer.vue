@@ -108,7 +108,7 @@ function onAfterLeave() {
 <style scoped>
 .page-layer {
   position: relative;
-  /* Above the canvas and its lightbox (4), below the nav (50). */
+  /* Above the gallery and its lightbox (4), below the nav (50). */
   z-index: 40;
   padding: 104px 0 40px;
   pointer-events: none;
@@ -155,7 +155,6 @@ function onAfterLeave() {
   border-radius: 4px;
   background: transparent;
   color: #d6d6d6;
-  cursor: pointer;
 }
 
 .page-close svg {

@@ -85,10 +85,10 @@ export const mosaic = [
   { id: "m12", widget: "globe" },
 ]
 
-export function layoutMosaic(list, width, heights = {}) {
+export function layoutMosaic(list, width, heights = {}, top = TOP) {
   const inner = Math.max(240, width - MARGIN * 2)
   const ctx = metrics(inner, width)
-  ctx.padY = TOP
+  ctx.padY = top
   ctx.heights = heights
   const score =
     ctx.mode === "phone"

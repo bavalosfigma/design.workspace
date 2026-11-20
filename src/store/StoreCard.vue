@@ -160,10 +160,6 @@ function onKey(event) {
   transition: transform 520ms cubic-bezier(0.22, 1, 0.3, 1);
 }
 
-.slide.is-side {
-  cursor: pointer;
-}
-
 .slide.is-out {
   visibility: hidden;
   pointer-events: none;
@@ -228,7 +224,6 @@ function onKey(event) {
   font-size: 14px;
   font-weight: 700;
   letter-spacing: -0.63px;
-  cursor: pointer;
 }
 
 .count {

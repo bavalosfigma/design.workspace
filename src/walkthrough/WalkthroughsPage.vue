@@ -82,7 +82,6 @@ function openFilm() {
   font-variation-settings: "wdth" 100;
   text-align: left;
   text-box: normal;
-  cursor: pointer;
 }
 
 .heading {

@@ -123,7 +123,6 @@ function select(link) {
   color: #000;
   font: inherit;
   letter-spacing: inherit;
-  cursor: pointer;
 }
 
 .nav.is-page .nav-menu {
@@ -157,7 +156,6 @@ function select(link) {
   border: 0;
   background: transparent;
   color: inherit;
-  cursor: pointer;
 }
 
 .nav-close-icon {
@@ -190,7 +188,6 @@ function select(link) {
   font: inherit;
   letter-spacing: inherit;
   white-space: nowrap;
-  cursor: pointer;
 }
 
 .nav-link:focus-visible {

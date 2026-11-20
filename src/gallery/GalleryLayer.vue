@@ -113,7 +113,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
 </script>
 
 <template>
-  <div ref="viewport" class="viewport" role="region" aria-label="Canvas" :inert="quiet ? true : undefined">
+  <div ref="viewport" class="viewport" role="region" aria-label="Gallery" :inert="quiet ? true : undefined">
     <p class="visually-hidden">Select a picture to view it larger. Drag to move the pictures, or use the arrow keys.</p>
     <div
       class="stage"
@@ -230,7 +230,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
   color: inherit;
   font: inherit;
   text-align: left;
-  cursor: pointer;
   transform-origin: center center;
   animation: shot-pop 560ms cubic-bezier(0.22, 1.25, 0.36, 1) backwards;
 }
@@ -328,7 +327,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
   background: transparent;
   color: #d6d6d6;
   pointer-events: auto;
-  cursor: pointer;
 }
 
 .lightbox-close svg {
@@ -367,7 +365,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey))
   color: #f3f3f1;
   pointer-events: auto;
   transform: translateY(-50%);
-  cursor: pointer;
 }
 
 .lightbox-prev {

@@ -627,7 +627,6 @@ onBeforeUnmount(() => {
   font: inherit;
   font-weight: 700;
   letter-spacing: -0.04em;
-  cursor: pointer;
 }
 
 .toggle {
