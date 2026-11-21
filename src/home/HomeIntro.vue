@@ -118,7 +118,14 @@ function onHandleKey(event) {
   scale.value = Math.min(limit, Math.max(minScale, scale.value + (grow ? step : -step)))
 }
 
+function held() {
+  return document.documentElement.classList.contains("is-intro-held")
+}
+
 function onScroll() {
+  // Modals reset scroll while they are open. The hold keeps the fade
+  // that was already on screen, including after the modal closes.
+  if (held()) return
   const node = root.value
   if (!node) return
   const distance = Math.max(node.offsetHeight * 0.45, margin.value - node.offsetHeight * 0.4)
@@ -139,6 +146,8 @@ watch(
       arrive.value = false
       return
     }
+    const written = root.value?.style.opacity
+    if (gone.value || (written && Number(written) < 0.99)) return
     nextTick(() => {
       requestAnimationFrame(() => {
         arrive.value = true

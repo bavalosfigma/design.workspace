@@ -58,6 +58,22 @@ let galleryTimer = 0
 const { toggle: toggleOptions } = provideCardOptions()
 const underId = shallowRef(null)
 let catalogScroll = 0
+let introScroll = 0
+
+function holdIntro() {
+  const root = document.documentElement
+  if (root.classList.contains("is-intro-held")) return
+  introScroll = window.scrollY
+  root.classList.add("is-intro-held")
+}
+
+function releaseIntro(top = false) {
+  const root = document.documentElement
+  if (!root.classList.contains("is-intro-held")) return
+  window.scrollTo(0, top ? 0 : introScroll)
+  root.classList.remove("is-intro-held")
+  if (top) window.dispatchEvent(new Event("scroll"))
+}
 
 const wallPhase = shallowRef("idle")
 const arriving = shallowRef(false)
@@ -81,7 +97,7 @@ const filmPage = computed(() => {
   return page
 })
 
-const showIntro = computed(() => styleId.value === "mosaic" && filmPage.value == null)
+const showIntro = computed(() => styleId.value === "mosaic")
 
 const board = computed(() => {
   const films = filmPage.value
@@ -174,6 +190,7 @@ function openPage(id) {
   }
   const next = resolvePage(id)
   if (!next) return
+  holdIntro()
   const currentPage = resolvePage(openId.value)
   if (openId.value === null) {
     pageReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -257,6 +274,7 @@ function finishReturn() {
 
 function openGallery() {
   if (phase.value !== "idle") return
+  holdIntro()
   returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
   navOpen.value = false
   menuOpen.value = false
@@ -298,6 +316,7 @@ function finishGallery() {
   if (phase.value !== "return") return
   phase.value = "idle"
   document.documentElement.classList.remove("is-grid-locked")
+  releaseIntro()
   stackRefresh.value += 1
   if (openId.value) return
   const back = returnFocus
@@ -325,6 +344,7 @@ function closePage() {
 
 function restoreFocus() {
   if (resolvePage(openId.value)) return
+  releaseIntro()
   const back = pageReturnFocus
   pageReturnFocus = null
   back?.focus({ preventScroll: true })
@@ -342,6 +362,7 @@ function goHome() {
   releaseWallLock()
   if (phase.value === "drop" || phase.value === "open") closeGallery()
   if (styleId.value !== "mosaic") choose("mosaic")
+  releaseIntro(true)
   window.scrollTo(0, 0)
 }
 
@@ -422,6 +443,7 @@ onUnmounted(() => {
   window.clearTimeout(galleryTimer)
   window.clearTimeout(wallTimer)
   document.documentElement.classList.remove("is-grid-locked")
+  document.documentElement.classList.remove("is-intro-held")
 })
 </script>
 
